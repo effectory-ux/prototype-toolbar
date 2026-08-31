@@ -1,0 +1,173 @@
+/* prototype-bar.css — styles for the prototype toolbar (src/proto/).
+   Self-contained: no tokens or classes from the host app's design system, so
+   the folder can be lifted into another project as-is. Dark and compact on
+   purpose — tooling must never be mistaken for product UI.
+
+   The shell: the host wraps its whole app in .proto-shell, so the bar is a
+   real row above the prototype (never an overlay) and the app below gets the
+   remaining height. z-index 10000 keeps the bar AND its menus above anything
+   the prototype itself stacks (sticky bars, overlays and dialogs included) —
+   raise it if a host app ever exceeds that. */
+.proto-shell { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ---- Prototype toolbar (tooling, NOT product UI) -------------------------
+   A real full-width row ABOVE the prototype, not an overlay: the app below is
+   sized to the remaining height, so the bar never covers a screen. Deliberately
+   outside the Engage DS — dark and compact, so it cannot be mistaken for
+   product UI. Hide it with Ctrl+` or its close button; reveal it again from the
+   tab in the very top-left corner. */
+.pbar { position: relative; z-index: 10000; flex: none; display: flex; align-items: center; gap: 6px; width: 100%;
+  padding: 7px 12px; background: #14161a; color: #e7e9ec; font-size: 12.5px;
+  font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif; border-bottom: 1px solid #2a2f39; }
+.pbar-badge { flex: none; padding: 3px 8px; border-radius: 999px; background: #2a2f39; color: #b9c0cc;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.pbar-btn, .pbar-icon { display: inline-flex; align-items: center; gap: 5px; flex: none;
+  padding: 5px 9px; border: none; border-radius: 6px; background: transparent; color: #e7e9ec;
+  font: inherit; cursor: pointer; }
+.pbar-btn:hover, .pbar-icon:hover { background: #2a2f39; }
+.pbar-btn.is-open { background: #343b47; }
+.pbar-btn i, .pbar-icon i { display: flex; }
+.pbar-count { padding: 1px 6px; border-radius: 999px; background: #7ad3c8; color: #14161a;
+  font-size: 10.5px; font-weight: 700; }
+.pbar-sep { width: 1px; height: 16px; background: #343b47; flex: none; }
+.pbar-url { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: #9aa3b2; font-family: 'Liberation Mono', ui-monospace, monospace; font-size: 11.5px; padding: 0 4px; }
+.pbar-hint { flex: none; color: #6b7280; font-size: 11px; }
+.pbar-menu-wrap { position: relative; flex: none; }
+.pbar-scrim { position: fixed; inset: 0; z-index: 1; }
+.pbar-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 2; width: 320px;
+  max-height: 70vh; overflow-y: auto; padding: 6px; border-radius: 10px; background: #14161a;
+  box-shadow: 0 10px 30px rgba(16,22,26,.45); display: flex; flex-direction: column; gap: 1px; }
+.pbar-menu-head { padding: 6px 8px; color: #7f8796; font-size: 10.5px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase; }
+.pbar-menu-note { padding: 2px 8px 8px; color: #6b7280; font-size: 11px; line-height: 1.45; }
+.pbar-item { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%;
+  padding: 7px 9px; border: none; border-radius: 7px; background: transparent; color: #e7e9ec;
+  font: inherit; text-align: left; cursor: pointer; }
+.pbar-item:hover { background: #2a2f39; }
+.pbar-item.is-on { background: #22303a; }
+.pbar-item i { display: flex; margin-left: auto; color: #7ad3c8; }
+.pbar-item-label { font-weight: 600; }
+.pbar-item-desc { flex-basis: 100%; color: #8b93a2; font-size: 11.5px; }
+/* A toggle row shows a switch on the right instead of a check. */
+.pbar-switch { margin-left: auto; flex: none; width: 30px; height: 18px; border-radius: 999px;
+  background: #343b47; position: relative; transition: background .15s ease; }
+.pbar-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px;
+  border-radius: 50%; background: #9aa3b2; transition: transform .15s ease, background .15s ease; }
+.pbar-item.is-on .pbar-switch { background: #1f6f66; }
+.pbar-item.is-on .pbar-switch::after { transform: translateX(12px); background: #7ad3c8; }
+/* Reveal tab — the way back when the bar is collapsed: a vertical button on
+   the middle of the right screen edge, out of every layout's way. */
+.pbar-peek { position: fixed; top: 50%; right: 0; transform: translateY(-50%); z-index: 10000;
+  display: inline-flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 10px 5px 10px 6px; border: none; border-radius: 8px 0 0 8px; cursor: pointer;
+  background: #14161a; color: #cfd4dc; font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif; font-size: 11px;
+  font-weight: 600; }
+.pbar-peek:hover, .pbar-peek:focus-visible { background: #1d2027; }
+.pbar-peek-lbl { writing-mode: vertical-rl; letter-spacing: .04em; }
+.pbar-peek i { display: flex; }
+
+/* ---- Tooltips (self-contained, below the bar) ---------------------------- */
+.pbar-tt { position: relative; }
+.pbar-tt:hover::after, .pbar-tt:focus-visible::after {
+  content: attr(data-tip); position: absolute; top: calc(100% + 6px); right: 0; z-index: 3;
+  padding: 4px 8px; border-radius: 6px; background: #2a2f39; color: #e7e9ec;
+  font-size: 11px; font-weight: 500; white-space: nowrap; pointer-events: none;
+  box-shadow: 0 4px 12px rgba(16,22,26,.4); }
+.pbar-tt.is-right:hover::after, .pbar-tt.is-right:focus-visible::after { right: 0; left: auto; }
+
+/* ---- Small screens: icons only ------------------------------------------- */
+/* Labels and chevrons go; the menu buttons pick up the same tooltip the
+   icon-only buttons always have. Menus hug the left screen edge instead of
+   their button so they stay on-screen. */
+@media (max-width: 760px) {
+  .pbar-lbl, .pbar-chev, .pbar-hint { display: none; }
+  .pbar-btn[data-tip] { position: relative; }
+  .pbar-btn[data-tip]:hover::after, .pbar-btn[data-tip]:focus-visible::after {
+    content: attr(data-tip); position: absolute; top: calc(100% + 6px); left: 0; z-index: 3;
+    padding: 4px 8px; border-radius: 6px; background: #2a2f39; color: #e7e9ec;
+    font-size: 11px; font-weight: 500; white-space: nowrap; pointer-events: none;
+    box-shadow: 0 4px 12px rgba(16,22,26,.4); }
+  .pbar-menu { position: fixed; top: 42px; left: 8px; right: 8px; width: auto; }
+}
+
+/* ---- Piwik event layer (EventLayer.jsx) -----------------------------------
+   Spec tooling drawn over the product UI: pins on tracked elements, a popover
+   with the definition, and a fired-events log. Same dark palette as the bar so
+   none of it reads as product. Funnel roles get their own colors: start green,
+   end amber — used on pin marks and chips alike. */
+.pvt-pin { position: fixed; z-index: 10001; transform: translate(-60%, -40%);
+  display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+  padding: 0; border: 1.5px solid #7ad3c8; border-radius: 50% 50% 50% 3px;
+  background: #14161a; cursor: pointer; box-shadow: 0 2px 8px rgba(16,22,26,.5); }
+.pvt-pin:hover { background: #2a2f39; }
+.pvt-mark { width: 7px; height: 7px; border-radius: 50%; background: #7ad3c8; }
+.pvt-mark.is-start { width: 0; height: 0; border-radius: 0; background: none;
+  border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 8px solid #8fd97a; }
+.pvt-mark.is-end { border-radius: 1.5px; background: #f2b46b; }
+.pvt-scrim { position: fixed; inset: 0; z-index: 10002; }
+.pvt-pop { position: fixed; z-index: 10003; width: 336px; padding: 12px; border-radius: 10px;
+  background: #14161a; color: #e7e9ec; box-shadow: 0 10px 30px rgba(16,22,26,.55);
+  font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif; font-size: 12px; }
+.pvt-pop-head { display: flex; align-items: center; gap: 8px; }
+.pvt-pop-title { font-weight: 600; font-size: 13px; }
+.pvt-chip { flex: none; padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase; background: #2a2f39; color: #b9c0cc; }
+.pvt-chip.is-start { background: #23331f; color: #8fd97a; }
+.pvt-chip.is-end { background: #392c1b; color: #f2b46b; }
+.pvt-pop-note { margin-top: 6px; color: #8b93a2; font-size: 11px; line-height: 1.5; }
+.pvt-spec { margin: 10px 0 0; padding: 9px 10px; border-radius: 7px; background: #1d2027;
+  color: #cfd4dc; font-family: 'Liberation Mono', ui-monospace, monospace; font-size: 11px;
+  line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.pvt-pop-foot { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.pvt-trigger { color: #6b7280; font-size: 11px; margin-right: auto; }
+.pvt-btn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px; border: none;
+  border-radius: 6px; background: #2a2f39; color: #e7e9ec; font: inherit; font-size: 11.5px;
+  font-weight: 600; cursor: pointer; }
+.pvt-btn:hover { background: #343b47; }
+.pvt-tray { position: fixed; right: 12px; bottom: 12px; z-index: 10001; width: 320px;
+  border-radius: 10px; background: #14161a; color: #e7e9ec; box-shadow: 0 10px 30px rgba(16,22,26,.55);
+  font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif; font-size: 12px; overflow: hidden; }
+.pvt-tray-head { display: flex; align-items: center; gap: 7px; padding: 8px 10px;
+  border-bottom: 1px solid #2a2f39; font-size: 10.5px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: #b9c0cc; }
+.pvt-tray-spacer { flex: 1; }
+.pvt-count { padding: 0 6px; border-radius: 999px; background: #7ad3c8; color: #14161a;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0; }
+.pvt-iconbtn { display: flex; padding: 4px; border: none; border-radius: 5px; background: transparent;
+  color: #9aa3b2; cursor: pointer; }
+.pvt-iconbtn:hover { background: #2a2f39; color: #e7e9ec; }
+.pvt-tray-empty { padding: 12px 12px 14px; color: #6b7280; font-size: 11px; line-height: 1.5; }
+.pvt-tray-body { max-height: 38vh; overflow-y: auto; padding: 4px; display: flex;
+  flex-direction: column; gap: 1px; }
+.pvt-row { display: flex; align-items: baseline; gap: 8px; padding: 6px 8px; border-radius: 6px; }
+.pvt-row:hover { background: #1d2027; }
+.pvt-row.is-complete { background: #1c2b20; color: #8fd97a; font-weight: 600; }
+.pvt-time { flex: none; color: #6b7280; font-family: 'Liberation Mono', ui-monospace, monospace;
+  font-size: 10px; }
+.pvt-row-main { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.pvt-row-label { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 11.5px; }
+.pvt-row-action { color: #8b93a2; font-family: 'Liberation Mono', ui-monospace, monospace;
+  font-size: 10px; overflow-wrap: anywhere; }
+
+/* ---- Inline copy editing (copyEdit.js) ------------------------------------ */
+.pbar-spacer { flex: 1; min-width: 8px; }
+.pbar-btn.is-editing { background: #1f6f66; color: #d9fef9; }
+.pbar-btn.is-editing:hover { background: #268277; }
+.pbar-btn.is-error { background: #5b2c2c; color: #f0b9b9; }
+.pbar-icon:disabled, .pbar-icon.is-disabled { opacity: .35; cursor: default; }
+.pbar-icon:disabled:hover { background: transparent; }
+/* While edit mode is on: show what's editable, keep the caret visible, and
+   make it obvious the app itself is frozen. The ring is two layers — a white
+   halo under a teal outline — so it reads on ANY background, light, dark or
+   brand-colored. Hover says "you could edit this"; .proto-edit-target (set
+   from the live selection) says "you are editing this". */
+.proto-editing { caret-color: #0a9d99; }
+.proto-edit-hover {
+  outline: 2px solid #0a9d99; outline-offset: 1px; border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.9), 0 0 0 5px rgba(255,255,255,.55); }
+.proto-edit-target {
+  outline: 2px solid #0a9d99 !important; outline-offset: 1px; border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.9), 0 0 0 5px rgba(255,255,255,.55) !important; }
+.proto-editing .pbar, .proto-editing .pbar *, .proto-editing .pbar-menu * { outline: none !important; box-shadow: none; }
+.proto-editing *:focus { outline: none; }
