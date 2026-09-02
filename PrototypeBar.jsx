@@ -273,15 +273,15 @@ export function PrototypeBar(props) {
 
       {useCases.length > 0 && (
         <div className="pbar-menu-wrap">
-          <button className={"pbar-btn" + (menu === "cases" ? " is-open" : "")} data-tip="Use cases"
+          <button className={"pbar-btn" + (menu === "cases" ? " is-open" : "")} data-tip="Screens"
             onClick={() => setMenu(m => (m === "cases" ? null : "cases"))}>
-            <Ic name="shapes" size={14} /><span className="pbar-lbl">Use cases</span><span className="pbar-chev"><Ic name="chevron-down" size={14} /></span>
+            <Ic name="shapes" size={14} /><span className="pbar-lbl">Screens</span>
           </button>
           {menu === "cases" && (
             <>
               <div className="pbar-scrim" onMouseDown={() => setMenu(null)} />
               <div className="pbar-menu">
-                <div className="pbar-menu-head">Jump to a state</div>
+                <div className="pbar-menu-head">Jump to a screen</div>
                 {useCases.map(c => (
                   <button key={c.key} className="pbar-item" onClick={() => pick(c.key)}>
                     <span className="pbar-item-label">{c.label}</span>
@@ -300,7 +300,6 @@ export function PrototypeBar(props) {
             onClick={() => setMenu(m => (m === "edges" ? null : "edges"))}>
             <Ic name="randomize" size={14} /><span className="pbar-lbl">Edge cases</span>
             {offCount > 0 && <span className="pbar-count">{offCount}</span>}
-            <span className="pbar-chev"><Ic name="chevron-down" size={14} /></span>
           </button>
           {menu === "edges" && (
             <>
@@ -327,7 +326,6 @@ export function PrototypeBar(props) {
           <button className={"pbar-btn" + (menu === "variants" ? " is-open" : "")} data-tip="Variants"
             onClick={() => setMenu(m => (m === "variants" ? null : "variants"))}>
             <Ic name="sliders" size={14} /><span className="pbar-lbl">Variants</span>
-            <span className="pbar-chev"><Ic name="chevron-down" size={14} /></span>
           </button>
           {menu === "variants" && (
             <>
@@ -351,9 +349,9 @@ export function PrototypeBar(props) {
 
       {startPoints.length > 0 && (
         <div className="pbar-menu-wrap">
-          <button className={"pbar-btn" + (menu === "start" ? " is-open" : "")} data-tip="Start at"
+          <button className={"pbar-btn" + (menu === "start" ? " is-open" : "")} data-tip="Start"
             onClick={() => setMenu(m => (m === "start" ? null : "start"))}>
-            <Ic name="home" size={14} /><span className="pbar-lbl">Start at</span><span className="pbar-chev"><Ic name="chevron-down" size={14} /></span>
+            <Ic name="home" size={14} /><span className="pbar-lbl">Start</span>
           </button>
           {menu === "start" && (
             <>
