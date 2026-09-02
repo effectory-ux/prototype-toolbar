@@ -69,6 +69,19 @@ export const liveShareUrl = (versions, { toolbar = false, page = false } = {}) =
   } catch (_) { return null; }
 };
 
+// Dev only: is the local prototype ahead of its live deploy? Answered by the
+// protoVersions vite plugin (it can read git; the page cannot). Null when it
+// cannot tell — no plugin, no live address, offline.
+export const versionFreshness = async (v) => {
+  if (!isDevHost()) return null;
+  try {
+    const r = await fetch(`/__proto/versions/freshness?key=${encodeURIComponent(v.key)}`);
+    if (!r.ok) return null;
+    const j = await r.json();
+    return typeof j.ahead === "boolean" ? j : null;
+  } catch (_) { return null; }
+};
+
 // Dev only: ask the dev server BEHIND THIS PAGE to make sure the sibling's
 // dev server runs (starting it if needed) before we navigate to it — a page
 // cannot spawn processes, but its Vite server can (the protoVersions plugin).

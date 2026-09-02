@@ -16,7 +16,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Ic } from "./icons.jsx";
 import { initCopyEdits, enableEdit, disableEdit, discardEdits, editCount, undoEdit, redoEdit, canUndo, canRedo, isDevHost } from "./copyEdit.js";
-import { currentVersion, versionUrl, versionAvailable, ensureVersionServer, liveShareUrl } from "./versions.js";
+import { currentVersion, versionUrl, versionAvailable, ensureVersionServer, liveShareUrl, versionFreshness } from "./versions.js";
 import { EventLayer } from "./EventLayer.jsx";
 import "./prototype-bar.css";
 
@@ -175,6 +175,16 @@ export function PrototypeBar(props) {
   const [shareToolbar, setShareToolbar] = useState(false);
   const [sharePage, setSharePage] = useState(false);
   const shareUrl = liveShareUrl(versions, { toolbar: shareToolbar, page: sharePage });
+  // Dev only: warn when local work is not on the live link yet. Checked when
+  // the Share menu opens (the dev server compares git against the deploy's
+  // commit stamp); null = cannot tell, and nothing is shown.
+  const [ahead, setAhead] = useState(null);
+  useEffect(() => {
+    if (menu !== "share" || !isDevHost() || !version) return;
+    let live = true;
+    versionFreshness(version).then(f => { if (live) setAhead(f ? f.ahead : null); });
+    return () => { live = false; };
+  }, [menu]); // eslint-disable-line
   const copyShare = () => {
     try {
       navigator.clipboard.writeText(shareUrl || plainLink(toolbarKey));
@@ -416,7 +426,12 @@ export function PrototypeBar(props) {
           <>
             <div className="pbar-scrim" onMouseDown={() => setMenu(null)} />
             <div className="pbar-menu is-right">
-              <div className="pbar-menu-head">Share</div>
+              <div className="pbar-menu-head pbar-share-head">
+                Share
+                {ahead === true && (
+                  <span className="pbar-ahead" title="This prototype has local changes the live link doesn't show yet.">Ahead of live</span>
+                )}
+              </div>
               {shareUrl ? (
                 <>
                   <div className="pbar-menu-note">A live link for anyone — no dev server needed.</div>

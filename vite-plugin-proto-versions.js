@@ -15,7 +15,13 @@
 //     answers {up:true} once the port accepts connections — or {up:false}
 //     after ~20s so the toolbar can say it could not start it.
 //   GET  /__proto/versions/status?key=…  → {up} without starting anything.
-import { spawn } from "node:child_process";
+//   GET  /__proto/versions/freshness?key=…  → {ahead, commits, dirty}: is the
+//     LOCAL prototype ahead of its live deploy? Compares the commit stamp the
+//     deploy workflow writes to <live url>/version.json against local git —
+//     commits since that stamp touching the version's folder (or the shared
+//     toolbar/registry), plus uncommitted changes there. A live site without
+//     a stamp (predates stamping, or never deployed) counts as ahead.
+import { spawn, execFile } from "node:child_process";
 import net from "node:net";
 import path from "node:path";
 
@@ -37,6 +43,31 @@ const waitUp = async (port, ms = 20000) => {
   return false;
 };
 
+const git = (cwd, args) => new Promise((resolve) => {
+  execFile("git", args, { cwd }, (err, stdout) => resolve(err ? null : stdout.trim()));
+});
+
+// Paths that end up in a version's deployed bundle: its own folder plus the
+// shared toolbar and the registry.
+const versionPaths = (v) => [v.path, "toolbar", "prototype-versions.js"];
+
+const freshness = async (root, v) => {
+  if (!v.url) return { ahead: null };
+  let stamp = null;
+  try {
+    const r = await fetch(new URL("version.json", v.url), { signal: AbortSignal.timeout(4000) });
+    if (r.ok) stamp = await r.json();
+  } catch (_) { return { ahead: null }; } // offline — say nothing rather than guess
+  const repo = path.resolve(root, "..");
+  const dirty = !!(await git(repo, ["status", "--porcelain", "--", ...versionPaths(v)]));
+  if (!stamp || !stamp.commit) return { ahead: true, commits: null, dirty };
+  const known = await git(repo, ["cat-file", "-t", stamp.commit]);
+  if (known !== "commit") return { ahead: true, commits: null, dirty }; // live built from history we don't have
+  const count = await git(repo, ["rev-list", "--count", `${stamp.commit}..HEAD`, "--", ...versionPaths(v)]);
+  const commits = count === null ? 0 : parseInt(count, 10) || 0;
+  return { ahead: commits > 0 || dirty, commits, dirty };
+};
+
 export function protoVersions(versions = []) {
   const spawned = new Set(); // don't double-spawn on rapid clicks
   return {
@@ -52,6 +83,13 @@ export function protoVersions(versions = []) {
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify(obj));
         };
+
+        if (url === "/__proto/versions/freshness" && req.method === "GET") {
+          const v = versions.find(x => x.key === new URLSearchParams(query || "").get("key"));
+          if (!v) return send(404, { error: "unknown version" });
+          freshness(root, v).then(f => send(200, f));
+          return;
+        }
 
         if (url === "/__proto/versions/status" && req.method === "GET") {
           const v = versions.find(x => x.key === new URLSearchParams(query || "").get("key"));
