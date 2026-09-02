@@ -16,7 +16,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Ic } from "./icons.jsx";
 import { initCopyEdits, enableEdit, disableEdit, discardEdits, editCount, undoEdit, redoEdit, canUndo, canRedo, isDevHost } from "./copyEdit.js";
-import { currentVersion, versionUrl, versionAvailable, ensureVersionServer } from "./versions.js";
+import { currentVersion, versionUrl, versionAvailable, ensureVersionServer, liveShareUrl } from "./versions.js";
 import { EventLayer } from "./EventLayer.jsx";
 import "./prototype-bar.css";
 
@@ -59,7 +59,7 @@ const saveHidden = (prefix, v) => { try { localStorage.setItem(hideKey(prefix), 
 //   variants    [{key, label, desc}]   — design variants under exploration
 //                                        (varState map + onToggleVariant(key))
 //   storagePrefix                      — localStorage namespace, e.g. "cyos"
-//   versions    [{key, label, desc, port, path, toolbarKey}]
+//   versions    [{key, label, desc, port, path, url, toolbarKey}]
 //               — this prototype's versions (the host's registry file; see
 //               versions.js). The bar works out which one it is FROM THE URL,
 //               shows that name on its badge (the collapsed tab stays
@@ -67,10 +67,28 @@ const saveHidden = (prefix, v) => { try { localStorage.setItem(hideKey(prefix), 
 //               the same step in another version. On a dev host it first asks
 //               its own dev server to start the sibling's (protoVersions vite
 //               plugin); deployed it marks unpublished siblings instead of
-//               linking into a 404.
-export function PrototypeBar({ useCases = [], edgeCases = [], startPoints = [], variants = [],
-  edges = {}, varState = {}, onUseCase = () => {}, onToggleEdge = () => {}, onToggleVariant = () => {},
-  storagePrefix = "proto", toolbarKey = "", events = {}, funnels = {}, versions = [] }) {
+//               linking into a 404. `url` also powers the Share menu's live
+//               link.
+//   config      — OR hand over the host's whole proto-config module
+//               (`import * as PROTO from "./data/proto-config.js"` →
+//               `config={PROTO}`): the bar reads the conventional exports
+//               (USE_CASES, EDGE_CASES, START_POINTS, VARIANTS, PIWIK_EVENTS,
+//               PIWIK_FUNNELS, PROTO_STORAGE_PREFIX, PROTO_TOOLBAR_KEY, or
+//               their camelCase equivalents) and renders every menu that has
+//               entries — declare a setting there and it shows up, no wiring.
+//               Explicit props win over config.
+export function PrototypeBar(props) {
+  const c = props.config || {};
+  const useCases = props.useCases ?? c.useCases ?? c.USE_CASES ?? [];
+  const edgeCases = props.edgeCases ?? c.edgeCases ?? c.EDGE_CASES ?? [];
+  const startPoints = props.startPoints ?? c.startPoints ?? c.START_POINTS ?? [];
+  const variants = props.variants ?? c.variants ?? c.VARIANTS ?? [];
+  const events = props.events ?? c.events ?? c.PIWIK_EVENTS ?? {};
+  const funnels = props.funnels ?? c.funnels ?? c.PIWIK_FUNNELS ?? {};
+  const storagePrefix = props.storagePrefix ?? c.storagePrefix ?? c.PROTO_STORAGE_PREFIX ?? "proto";
+  const toolbarKey = props.toolbarKey ?? c.toolbarKey ?? c.PROTO_TOOLBAR_KEY ?? "";
+  const versions = props.versions ?? c.versions ?? c.VERSIONS ?? [];
+  const { edges = {}, varState = {}, onUseCase = () => {}, onToggleEdge = () => {}, onToggleVariant = () => {} } = props;
   const version = currentVersion(versions);
   const [switching, setSwitching] = useState(null);   // version key being started
   const [switchFail, setSwitchFail] = useState(null); // version key that would not start
@@ -151,14 +169,22 @@ export function PrototypeBar({ useCases = [], edgeCases = [], startPoints = [], 
   }, [storagePrefix]);
 
   // Two links, and the difference is who you are copying for. The link icon
-  // takes this step exactly as you are looking at it (flag and all, which is
-  // how a colleague gets the toolbar). Share is for everyone else: the same
-  // step with the toolbar stripped out.
+  // takes this step exactly as you are looking at it — address bar, flag and
+  // all — for a colleague working on the prototype with you. Share is for
+  // everyone else: the LIVE address of this step, built from the versions
+  // registry, so it is right even from localhost and always points at this
+  // version rather than at whatever was deployed last. The toolbar is off in
+  // that link unless the menu's switch says otherwise.
   const copy = () => {
     try { navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 1600); } catch (_) {}
   };
-  const share = () => {
-    try { navigator.clipboard.writeText(plainLink(toolbarKey)); setShared(true); setTimeout(() => setShared(false), 1600); } catch (_) {}
+  const [shareToolbar, setShareToolbar] = useState(false);
+  const shareUrl = liveShareUrl(versions, { toolbar: shareToolbar });
+  const copyShare = () => {
+    try {
+      navigator.clipboard.writeText(shareUrl || plainLink(toolbarKey));
+      setShared(true); setTimeout(() => setShared(false), 1600);
+    } catch (_) {}
   };
   // Deployed, with the switcher open: check which siblings are actually
   // published — the registry can run ahead of the deploys.
@@ -391,10 +417,45 @@ export function PrototypeBar({ useCases = [], edgeCases = [], startPoints = [], 
         data-tip={copied ? "Copied" : "Copy link to this step"} aria-label="Copy link to this step">
         <Ic name={copied ? "check" : "copy"} size={14} />
       </button>
-      <button className="pbar-icon pbar-tt is-right" onClick={share}
-        data-tip={shared ? "Copied" : "Share without the toolbar"} aria-label="Share without the toolbar">
-        <Ic name={shared ? "check" : "share"} size={14} />
-      </button>
+      <div className="pbar-menu-wrap">
+        <button className={"pbar-icon pbar-tt is-right" + (menu === "share" ? " is-open" : "")}
+          onClick={() => setMenu(m => (m === "share" ? null : "share"))}
+          data-tip="Share this step" aria-label="Share this step">
+          <Ic name="share" size={14} />
+        </button>
+        {menu === "share" && (
+          <>
+            <div className="pbar-scrim" onMouseDown={() => setMenu(null)} />
+            <div className="pbar-menu is-right">
+              <div className="pbar-menu-head">Share this step</div>
+              {shareUrl ? (
+                <>
+                  <div className="pbar-menu-note">The live address of this step — it works for anyone, no dev server needed.</div>
+                  <div className="pbar-share-url">{shareUrl}</div>
+                  <button className={"pbar-item" + (shareToolbar ? " is-on" : "")}
+                    role="switch" aria-checked={shareToolbar} onClick={() => setShareToolbar(v => !v)}>
+                    <span className="pbar-item-label">Include the toolbar</span>
+                    <span className="pbar-switch" aria-hidden="true" />
+                    <span className="pbar-item-desc">The link carries the toolbar key, so whoever opens it gets this bar too.</span>
+                  </button>
+                  <button className="pbar-item" onClick={copyShare}>
+                    <span className="pbar-item-label">{shared ? "Copied" : "Copy live link"}</span>
+                    {shared && <Ic name="check" size={14} />}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="pbar-menu-note">This prototype has no live address in its versions registry — copying the current address without the toolbar instead.</div>
+                  <button className="pbar-item" onClick={copyShare}>
+                    <span className="pbar-item-label">{shared ? "Copied" : "Copy link"}</span>
+                    {shared && <Ic name="check" size={14} />}
+                  </button>
+                </>
+              )}
+            </div>
+          </>
+        )}
+      </div>
       <button className="pbar-icon pbar-tt is-right"
         onClick={() => { if (editing) { disableEdit(); setEditing(false); } setHide(true); saveHidden(storagePrefix, true); }}
         data-tip="Collapse toolbar (Ctrl+`)" aria-label="Collapse toolbar">

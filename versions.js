@@ -52,6 +52,21 @@ export const versionAvailable = async (versions, v) => {
   } catch (_) { return false; }
 };
 
+// The live (deployed) address of THIS step in THIS version — the link you
+// hand to anyone. Built from the registry's `url`, so it is right from
+// localhost too, and always points at the version you are on rather than at
+// whatever was deployed last. Null when the registry has no live address.
+export const liveShareUrl = (versions, { toolbar = false } = {}) => {
+  try {
+    const cur = currentVersion(versions);
+    if (!cur || !cur.url) return null;
+    const u = new URL(cur.url);
+    if (toolbar && cur.toolbarKey) u.search = `?${cur.toolbarKey}-toolbar-active`;
+    u.hash = window.location.hash;
+    return u.toString();
+  } catch (_) { return null; }
+};
+
 // Dev only: ask the dev server BEHIND THIS PAGE to make sure the sibling's
 // dev server runs (starting it if needed) before we navigate to it — a page
 // cannot spawn processes, but its Vite server can (the protoVersions plugin).

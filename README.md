@@ -128,6 +128,33 @@ wired inside `PrototypeBar`.
 />
 ```
 
+Or hand over the whole config module and let the bar read it — declare a
+setting in proto-config and its menu shows up, nothing else to wire:
+
+```jsx
+import * as PROTO from "./data/proto-config.js";
+
+<PrototypeBar config={PROTO} versions={VERSIONS}
+  onUseCase={goto} edges={edges} onToggleEdge={toggle} />
+```
+
+`config` understands the conventional export names (`USE_CASES`,
+`EDGE_CASES`, `START_POINTS`, `VARIANTS`, `PIWIK_EVENTS`, `PIWIK_FUNNELS`,
+`PROTO_STORAGE_PREFIX`, `PROTO_TOOLBAR_KEY`) and their camelCase twins;
+explicit props win. Handlers (`onUseCase`, `edges`…) stay props — they are
+app state, not config.
+
+## Two links: copy and share
+
+The link icon copies this step exactly as you see it — address bar, toolbar
+flag and all — for a colleague working on the prototype with you. The share
+icon opens a small menu with the LIVE address of this step, built from the
+versions registry's `url`, so it is right even from localhost and always
+points at the version you are on rather than at whatever was deployed last.
+The link is toolbar-free by default; the menu's "Include the toolbar" switch
+adds the key for receivers who should get the bar. Without a registry `url`
+the menu falls back to copying the current address without the flag.
+
 ## Versions: the badge names the prototype and switches between them
 
 Pass `versions` — the host's registry of the prototype's versions, one entry
