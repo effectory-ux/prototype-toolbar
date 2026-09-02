@@ -21,6 +21,19 @@
   font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif; border-bottom: 1px solid #2a2f39; }
 .pbar-badge { flex: none; padding: 3px 8px; border-radius: 999px; background: #2a2f39; color: #b9c0cc;
   font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+/* With sibling versions the badge is a button: the version switcher. */
+.pbar-badge-btn { display: inline-flex; align-items: center; gap: 4px; border: none;
+  font-family: inherit; cursor: pointer; }
+.pbar-badge-btn:hover, .pbar-badge-btn.is-open { background: #3a4150; color: #e6e9ef; }
+.pbar-badge-btn i { display: flex; }
+a.pbar-item { text-decoration: none; }
+.pbar-item.is-current { cursor: default; }
+.pbar-item.is-disabled { cursor: default; }
+.pbar-item.is-disabled:hover { background: transparent; }
+.pbar-item.is-disabled .pbar-item-label { color: #6b7280; }
+.pbar-item.is-busy .pbar-item-desc { color: #7ad3c8; animation: pbar-pulse 1.2s ease-in-out infinite; }
+@keyframes pbar-pulse { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .pbar-item.is-busy .pbar-item-desc { animation: none; } }
 .pbar-btn, .pbar-icon { display: inline-flex; align-items: center; gap: 5px; flex: none;
   padding: 5px 9px; border: none; border-radius: 6px; background: transparent; color: #e7e9ec;
   font: inherit; cursor: pointer; }

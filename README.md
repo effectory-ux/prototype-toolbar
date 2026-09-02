@@ -124,11 +124,61 @@ wired inside `PrototypeBar`.
   events={PIWIK_EVENTS} funnels={PIWIK_FUNNELS}  // the Events mode registry
   edges={edges} onUseCase={goto} onToggleEdge={toggle}
   varState={variantsOn} onToggleVariant={toggleVariant}
+  versions={VERSIONS}
 />
 ```
 
+## Versions: the badge names the prototype and switches between them
+
+Pass `versions` — the host's registry of the prototype's versions, one entry
+per version: `{ key, label, desc, port, path, toolbarKey }` (in CYOS the
+registry is `prototype-versions.js` at the repo root; the toolbar folder
+itself stays host-agnostic). The bar works out which entry is the page you
+are on FROM THE URL — deployed path segment first, dev port as fallback — so
+versions can share every source file with no per-version identity constant.
+
+- The expanded bar's badge shows the version's name instead of "Toolbar"
+  (the collapsed edge tab keeps saying "Toolbar") — the fastest way to tell
+  near-identical versions apart.
+- With more than one version, the badge becomes a menu linking each sibling
+  to the same step (same hash route; the toolbar flag carried along on a
+  deployed site).
+- On a dev host, picking a sibling first asks this page's own dev server to
+  start the sibling's server if it is down — that is the `protoVersions`
+  vite plugin (`vite-plugin-proto-versions.js`); add it to every version's
+  vite config with the same registry: `protoVersions(VERSIONS)`. Without the
+  plugin the click just navigates.
+- Deployed, the menu HEAD-checks each sibling and shows "Not published yet"
+  instead of linking into a 404 — so the switcher stays in sync with what is
+  actually on the Pages site, whatever the registry promises.
+
+Without `versions` nothing changes: the badge reads "Toolbar" and there is
+no menu.
+
 4. At boot, read the chosen start point with
    `getStartAt(storagePrefix, fallbackKey)`.
+
+## One shared toolbar across prototypes
+
+The canonical copy of this folder lives at
+**github.com/effectory-ux/prototype-toolbar** — improve the toolbar THERE (or
+here, then publish), so every prototype that embeds it can pull the same
+updates. A host repo embeds it as a git subtree named `toolbar/`:
+
+```sh
+# adopt it in a new prototype repo (once)
+git subtree add  --prefix=toolbar https://github.com/effectory-ux/prototype-toolbar.git main --squash
+
+# pull the latest toolbar into a host repo
+git subtree pull --prefix=toolbar https://github.com/effectory-ux/prototype-toolbar.git main --squash
+
+# publish toolbar changes made inside a host repo back upstream
+git subtree push --prefix=toolbar https://github.com/effectory-ux/prototype-toolbar.git main
+```
+
+Keep everything host-specific OUT of this folder — the versions registry
+(`prototype-versions.js`), proto-config, use cases — so a subtree pull never
+collides with a host's own setup. Everything in here must stay generic.
 
 ## Stacking
 

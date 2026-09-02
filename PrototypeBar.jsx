@@ -16,6 +16,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Ic } from "./icons.jsx";
 import { initCopyEdits, enableEdit, disableEdit, discardEdits, editCount, undoEdit, redoEdit, canUndo, canRedo, isDevHost } from "./copyEdit.js";
+import { currentVersion, versionUrl, versionAvailable, ensureVersionServer } from "./versions.js";
 import { EventLayer } from "./EventLayer.jsx";
 import "./prototype-bar.css";
 
@@ -58,9 +59,32 @@ const saveHidden = (prefix, v) => { try { localStorage.setItem(hideKey(prefix), 
 //   variants    [{key, label, desc}]   — design variants under exploration
 //                                        (varState map + onToggleVariant(key))
 //   storagePrefix                      — localStorage namespace, e.g. "cyos"
+//   versions    [{key, label, desc, port, path, toolbarKey}]
+//               — this prototype's versions (the host's registry file; see
+//               versions.js). The bar works out which one it is FROM THE URL,
+//               shows that name on its badge (the collapsed tab stays
+//               "Toolbar"), and with siblings the badge becomes a switcher to
+//               the same step in another version. On a dev host it first asks
+//               its own dev server to start the sibling's (protoVersions vite
+//               plugin); deployed it marks unpublished siblings instead of
+//               linking into a 404.
 export function PrototypeBar({ useCases = [], edgeCases = [], startPoints = [], variants = [],
   edges = {}, varState = {}, onUseCase = () => {}, onToggleEdge = () => {}, onToggleVariant = () => {},
-  storagePrefix = "proto", toolbarKey = "", events = {}, funnels = {} }) {
+  storagePrefix = "proto", toolbarKey = "", events = {}, funnels = {}, versions = [] }) {
+  const version = currentVersion(versions);
+  const [switching, setSwitching] = useState(null);   // version key being started
+  const [switchFail, setSwitchFail] = useState(null); // version key that would not start
+  const [published, setPublished] = useState({});     // key -> bool (deployed check)
+  const gotoVersion = async (e, v) => {
+    if (!isDevHost()) return; // deployed: plain navigation
+    e.preventDefault();
+    const href = e.currentTarget.href;
+    if (switching) return;
+    setSwitchFail(null);
+    setSwitching(v.key);
+    if (await ensureVersionServer(v)) { window.location.href = href; }
+    else { setSwitching(null); setSwitchFail(v.key); }
+  };
   const [hidden, setHide] = useState(() => getHidden(storagePrefix));
   const [menu, setMenu] = useState(null); // "cases" | "start" | "edges" | null
   const [start, setStart] = useState(() => getStartAt(storagePrefix, startPoints[0] && startPoints[0].key));
@@ -136,6 +160,19 @@ export function PrototypeBar({ useCases = [], edgeCases = [], startPoints = [], 
   const share = () => {
     try { navigator.clipboard.writeText(plainLink(toolbarKey)); setShared(true); setTimeout(() => setShared(false), 1600); } catch (_) {}
   };
+  // Deployed, with the switcher open: check which siblings are actually
+  // published — the registry can run ahead of the deploys.
+  useEffect(() => {
+    if (menu !== "version" || isDevHost()) return;
+    let live = true;
+    versions.forEach(async (v) => {
+      if (version && v.key === version.key) return;
+      const ok = await versionAvailable(versions, v);
+      if (live) setPublished(p => ({ ...p, [v.key]: ok }));
+    });
+    return () => { live = false; };
+  }, [menu]); // eslint-disable-line
+
   const pick = (key) => { setMenu(null); onUseCase(key); };
   const pickStart = (key) => { setStart(key); setStartAt(storagePrefix, key); setMenu(null); };
   const offCount = edgeCases.filter(e => edges[e.key] !== e.on).length;
@@ -159,7 +196,54 @@ export function PrototypeBar({ useCases = [], edgeCases = [], startPoints = [], 
     <>
     {layer}
     <div className="pbar" ref={barRef}>
-      <span className="pbar-badge">Toolbar</span>
+      {version && versions.length > 1 ? (
+        <div className="pbar-menu-wrap">
+          <button className={"pbar-badge pbar-badge-btn" + (menu === "version" ? " is-open" : "")}
+            data-tip="Switch version" onClick={() => setMenu(m => (m === "version" ? null : "version"))}>
+            {version.label}
+            <span className="pbar-chev"><Ic name="chevron-down" size={12} /></span>
+          </button>
+          {menu === "version" && (
+            <>
+              <div className="pbar-scrim" onMouseDown={() => setMenu(null)} />
+              <div className="pbar-menu">
+                <div className="pbar-menu-head">Prototype versions</div>
+                <div className="pbar-menu-note">Compare versions of this prototype. You land on the same step when the other version has it too.</div>
+                {versions.map(v => {
+                  if (v.key === version.key) return (
+                    <span key={v.key} className="pbar-item is-on is-current">
+                      <span className="pbar-item-label">{v.label}</span>
+                      <Ic name="check" size={14} />
+                      <span className="pbar-item-desc">{v.desc}</span>
+                    </span>
+                  );
+                  if (published[v.key] === false) return (
+                    <span key={v.key} className="pbar-item is-disabled">
+                      <span className="pbar-item-label">{v.label}</span>
+                      <span className="pbar-item-desc">Not published yet</span>
+                    </span>
+                  );
+                  const busy = switching === v.key;
+                  const failed = switchFail === v.key;
+                  return (
+                    <a key={v.key} className={"pbar-item" + (busy ? " is-busy" : "")}
+                      href={versionUrl(versions, v)} onClick={(e) => gotoVersion(e, v)}>
+                      <span className="pbar-item-label">{v.label}</span>
+                      <span className="pbar-item-desc">
+                        {busy ? "Starting its dev server…"
+                          : failed ? "Couldn't start its dev server. Start it manually, then try again."
+                          : v.desc}
+                      </span>
+                    </a>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      ) : (
+        <span className="pbar-badge">{version ? version.label : "Toolbar"}</span>
+      )}
 
       {useCases.length > 0 && (
         <div className="pbar-menu-wrap">
