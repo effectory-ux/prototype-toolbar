@@ -106,7 +106,6 @@ export function PrototypeBar(props) {
   const [hidden, setHide] = useState(() => getHidden(storagePrefix));
   const [menu, setMenu] = useState(null); // "cases" | "start" | "edges" | null
   const [start, setStart] = useState(() => getStartAt(storagePrefix, startPoints[0] && startPoints[0].key));
-  const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
   // The Piwik spec layer: pins on tracked elements plus a fired-events log.
   // A mode you leave on while walking a developer through the tracking, so
@@ -168,18 +167,14 @@ export function PrototypeBar(props) {
     return () => window.removeEventListener("keydown", h);
   }, [storagePrefix]);
 
-  // Two links, and the difference is who you are copying for. The link icon
-  // takes this step exactly as you are looking at it — address bar, flag and
-  // all — for a colleague working on the prototype with you. Share is for
-  // everyone else: the LIVE address of this step, built from the versions
+  // Share = the LIVE address of this prototype, built from the versions
   // registry, so it is right even from localhost and always points at this
-  // version rather than at whatever was deployed last. The toolbar is off in
-  // that link unless the menu's switch says otherwise.
-  const copy = () => {
-    try { navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 1600); } catch (_) {}
-  };
+  // version rather than at whatever was deployed last. It opens at the
+  // prototype's start unless "Share this page" is on, and the toolbar stays
+  // out of the link unless "Include the toolbar" says otherwise.
   const [shareToolbar, setShareToolbar] = useState(false);
-  const shareUrl = liveShareUrl(versions, { toolbar: shareToolbar });
+  const [sharePage, setSharePage] = useState(false);
+  const shareUrl = liveShareUrl(versions, { toolbar: shareToolbar, page: sharePage });
   const copyShare = () => {
     try {
       navigator.clipboard.writeText(shareUrl || plainLink(toolbarKey));
@@ -234,7 +229,7 @@ export function PrototypeBar(props) {
               <div className="pbar-scrim" onMouseDown={() => setMenu(null)} />
               <div className="pbar-menu">
                 <div className="pbar-menu-head">Prototype versions</div>
-                <div className="pbar-menu-note">Compare versions of this prototype. You land on the same step when the other version has it too.</div>
+                <div className="pbar-menu-note">Compare versions of this prototype. You land on the same screen when the other version has it too.</div>
                 {versions.map(v => {
                   if (v.key === version.key) return (
                     <span key={v.key} className="pbar-item is-on is-current">
@@ -306,7 +301,7 @@ export function PrototypeBar(props) {
               <div className="pbar-scrim" onMouseDown={() => setMenu(null)} />
               <div className="pbar-menu">
                 <div className="pbar-menu-head">Not every account is the same</div>
-                <div className="pbar-menu-note">Flip these to show a use case both ways. They apply to the survey you have open.</div>
+                <div className="pbar-menu-note">Flip these to show a screen both ways. They apply to the survey you have open.</div>
                 {edgeCases.map(c => (
                   <button key={c.key} className={"pbar-item" + (edges[c.key] ? " is-on" : "")}
                     role="switch" aria-checked={!!edges[c.key]} onClick={() => onToggleEdge(c.key)}>
@@ -391,7 +386,7 @@ export function PrototypeBar(props) {
             </>
           )}
           <button className={"pbar-btn pbar-tt is-right" + (editing ? " is-editing" : "") + (saveState === "error" ? " is-error" : "")}
-            data-tip={saveState === "error" ? "Not saved — is the dev server running with the proto-edits plugin?" : editing ? "Save and stop editing" : "Edit texts inline"}
+            data-tip={saveState === "error" ? "Not saved. Check that the dev server runs with the proto-edits plugin." : editing ? "Save and stop editing" : "Edit text inline"}
             onClick={toggleEdit}>
             <Ic name={editing ? "check" : "edit"} size={14} />
             <span className="pbar-lbl">{editing ? "Save" : "Edit"}</span>
@@ -411,25 +406,27 @@ export function PrototypeBar(props) {
         </>
       )}
 
-      <button className="pbar-icon pbar-tt is-right" onClick={copy}
-        data-tip={copied ? "Copied" : "Copy link to this step"} aria-label="Copy link to this step">
-        <Ic name={copied ? "check" : "copy"} size={14} />
-      </button>
       <div className="pbar-menu-wrap">
         <button className={"pbar-icon pbar-tt is-right" + (menu === "share" ? " is-open" : "")}
           onClick={() => setMenu(m => (m === "share" ? null : "share"))}
-          data-tip="Share this step" aria-label="Share this step">
+          data-tip="Share" aria-label="Share">
           <Ic name="share" size={14} />
         </button>
         {menu === "share" && (
           <>
             <div className="pbar-scrim" onMouseDown={() => setMenu(null)} />
             <div className="pbar-menu is-right">
-              <div className="pbar-menu-head">Share this step</div>
+              <div className="pbar-menu-head">Share</div>
               {shareUrl ? (
                 <>
-                  <div className="pbar-menu-note">The live address of this step — it works for anyone, no dev server needed.</div>
+                  <div className="pbar-menu-note">A live link for anyone — no dev server needed.</div>
                   <div className="pbar-share-url">{shareUrl}</div>
+                  <button className={"pbar-item" + (sharePage ? " is-on" : "")}
+                    role="switch" aria-checked={sharePage} onClick={() => setSharePage(v => !v)}>
+                    <span className="pbar-item-label">Share this page</span>
+                    <span className="pbar-switch" aria-hidden="true" />
+                    <span className="pbar-item-desc">The link opens on the screen you are looking at now instead of at the prototype's start.</span>
+                  </button>
                   <button className={"pbar-item" + (shareToolbar ? " is-on" : "")}
                     role="switch" aria-checked={shareToolbar} onClick={() => setShareToolbar(v => !v)}>
                     <span className="pbar-item-label">Include the toolbar</span>
@@ -443,7 +440,7 @@ export function PrototypeBar(props) {
                 </>
               ) : (
                 <>
-                  <div className="pbar-menu-note">This prototype has no live address in its versions registry — copying the current address without the toolbar instead.</div>
+                  <div className="pbar-menu-note">No live address is set up for this prototype. This copies the current address without the toolbar.</div>
                   <button className="pbar-item" onClick={copyShare}>
                     <span className="pbar-item-label">{shared ? "Copied" : "Copy link"}</span>
                     {shared && <Ic name="check" size={14} />}

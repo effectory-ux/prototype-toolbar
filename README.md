@@ -144,16 +144,16 @@ import * as PROTO from "./data/proto-config.js";
 explicit props win. Handlers (`onUseCase`, `edges`…) stay props — they are
 app state, not config.
 
-## Two links: copy and share
+## Share
 
-The link icon copies this step exactly as you see it — address bar, toolbar
-flag and all — for a colleague working on the prototype with you. The share
-icon opens a small menu with the LIVE address of this step, built from the
-versions registry's `url`, so it is right even from localhost and always
-points at the version you are on rather than at whatever was deployed last.
-The link is toolbar-free by default; the menu's "Include the toolbar" switch
-adds the key for receivers who should get the bar. Without a registry `url`
-the menu falls back to copying the current address without the flag.
+The share icon opens a small menu with the LIVE address of the prototype,
+built from the versions registry's `url`, so it is right even from localhost
+and always points at the version you are on rather than at whatever was
+deployed last. By default the link opens at the prototype's start and is
+toolbar-free; "Share this page" makes it open on the screen you are looking
+at, and "Include the toolbar" adds the key for receivers who should get the
+bar. Without a registry `url` the menu falls back to copying the current
+address without the flag.
 
 ## Versions: the badge names the prototype and switches between them
 
