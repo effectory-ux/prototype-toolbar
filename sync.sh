@@ -125,12 +125,38 @@ cmd_in() {
 }
 
 # ---- out: upstream → hosts --------------------------------------------------------
-# A host that was squash-added pulls squashed; the origin host (CYOS, whose
-# history the upstream was split from) cannot squash and merges instead.
+# How a host takes upstream commits depends on how it got the toolbar:
+#   squash  — it was `git subtree add --squash`-ed: one squashed commit per pull
+#   merge   — its history already contains upstream commits (the origin host,
+#             CYOS, whose history upstream was split from): a plain subtree merge
+#   graft   — first contact, histories unrelated: one merge that replaces
+#             toolbar/ with upstream and records the subtree markers, so the
+#             next pull is a plain merge and `subtree split` maps back cleanly
+pull_mode() { # <host path>
+  if git -C "$1" log --format=%s | grep -q "^Squashed 'toolbar/' content"; then echo squash
+  elif [ -n "$(git -C "$1" merge-base HEAD FETCH_HEAD 2>/dev/null)" ]; then echo merge
+  else echo graft; fi
+}
 pull_host() { # <host path> <subject>
-  git -C "$1" subtree pull -q --prefix=toolbar "$UP" main --squash -m "Pull the shared toolbar: $2" >/dev/null 2>&1 \
-    || { git -C "$1" merge --abort >/dev/null 2>&1 || true
-         git -C "$1" subtree pull -q --prefix=toolbar "$UP" main -m "Pull the shared toolbar: $2" >/dev/null 2>&1; }
+  local p="$1" msg="Pull the shared toolbar: $2"
+  git -C "$p" fetch -q "$UP" main || return 1
+  case "$(pull_mode "$p")" in
+    squash) git -C "$p" subtree pull -q --prefix=toolbar "$UP" main --squash -m "$msg" >/dev/null 2>&1 ;;
+    merge)  git -C "$p" subtree pull -q --prefix=toolbar "$UP" main -m "$msg" >/dev/null 2>&1 ;;
+    graft)
+      local main sub; main="$(git -C "$p" rev-parse HEAD)"; sub="$(git -C "$p" rev-parse FETCH_HEAD)"
+      git -C "$p" merge -q -s ours --no-commit --allow-unrelated-histories FETCH_HEAD >/dev/null 2>&1 &&
+      git -C "$p" rm -r -q --cached toolbar >/dev/null 2>&1 && rm -rf "$p/toolbar" &&
+      git -C "$p" read-tree --prefix=toolbar/ -u FETCH_HEAD &&
+      git -C "$p" commit -q -m "$msg
+
+First pull from the standalone prototype-toolbar repo; from here on the two
+histories are related and git subtree pull works directly.
+
+git-subtree-dir: toolbar
+git-subtree-mainline: $main
+git-subtree-split: $sub" >/dev/null 2>&1 ;;
+  esac
 }
 cmd_out() {
   local except="" n
