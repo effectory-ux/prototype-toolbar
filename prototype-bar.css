@@ -206,3 +206,11 @@ a.pbar-item { text-decoration: none; }
   box-shadow: 0 0 0 1px rgba(255,255,255,.9), 0 0 0 5px rgba(255,255,255,.55) !important; }
 .proto-editing .pbar, .proto-editing .pbar *, .proto-editing .pbar-menu * { outline: none !important; box-shadow: none; }
 .proto-editing *:focus { outline: none; }
+
+/* ---- Update hint (prototype-bar.js + load.js) ------------------------------
+   Shown when a prototype's vendored copy of the toolbar is behind the
+   published release line. Same amber as "Ahead of live": a maintainer's note. */
+.pbar-update { flex: none; padding: 2px 8px; border-radius: 999px; background: rgba(245,183,66,.16);
+  border: 1px solid rgba(245,183,66,.45); color: #f5c264; font-size: 10.5px; font-weight: 700;
+  letter-spacing: .04em; text-decoration: none; }
+.pbar-update:hover { background: rgba(245,183,66,.28); }

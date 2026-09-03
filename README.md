@@ -1,19 +1,19 @@
 # Prototype toolbar
 
 A self-contained toolbar for prototypes, in the spirit of the Figma /
-Claude Design prototype chrome. It comes in two flavors from the same folder —
-`PrototypeBar.jsx` for React/Vite prototypes and `prototype-bar.js` for static
-HTML pages (see "Static prototypes" below) — sharing one stylesheet and one link
-contract: a dark, compact row **above** the prototype
+Claude Design prototype chrome. It comes in two flavors from the same repo —
+`PrototypeBar.jsx` for React/Vite prototypes (an npm dependency) and
+`prototype-bar.js` for static HTML pages (loaded from GitHub Pages, see "Static
+prototypes" below) — sharing one stylesheet and one link contract: a dark, compact row **above** the prototype
 (never an overlay) with four menus — jump to a **use case**, flip **edge
 cases**, compare **variants**, choose the **start point** — plus an **Events**
 mode (the Piwik analytics spec drawn over the live UI) and the current deep
 link with a copy button. Hide it with Ctrl+` or the close button; a peek tab
 on the right screen edge brings it back.
 
-This folder lives at the **repo root** of every host (`toolbar/`) and knows
-nothing about any one prototype: in CYOS it is the single toolbar every phase
-imports (phase-2 does so from `phase-2/src/app.jsx` and `phase-2/vite.config.js`). Everything
+This repo knows nothing about any one prototype: in CYOS it is the single
+toolbar every phase imports (phase-2 does so from `phase-2/src/app.jsx` and
+`phase-2/vite.config.js`). Everything
 project-specific — use cases, start points, variants, the toolbar key, the
 Piwik event registry — comes in as props from the host's own config (in CYOS:
 `phase-2/src/data/proto-config.js` and `phase-2/src/data/piwik-events.js`).
@@ -159,19 +159,42 @@ wired inside `PrototypeBar`.
 
 Most Engage design-system prototypes are plain HTML pages with no build step
 (gtma, group-linking, results-dashboard, question-library). For those the same
-bar ships as dependency-free vanilla JS. Two tags per page plus one config file
-for the whole prototype:
+bar ships as dependency-free vanilla JS, **published on GitHub Pages** —
+`https://effectory-ux.github.io/prototype-toolbar/v1/` — the way the design
+system itself is consumed. A page includes ONE local file, the loader, plus its
+own config; the loader brings in the stylesheet and the bar:
 
 ```html
-<head>
-  …
-  <link rel="stylesheet" href="toolbar/prototype-bar.css" />
-</head>
 <body>
-  <script src="proto-config.js"></script>          <!-- the host's own -->
-  <script src="toolbar/prototype-bar.js"></script>  <!-- right after <body> opens: no pop-in -->
+  <script src="proto-config.js"></script>      <!-- the host's own -->
+  <script src="toolbar/load.js"></script>      <!-- right after <body> opens: no pop-in -->
   …
 ```
+
+`toolbar/` in the host is a **vendored copy** of the runtime files (`load.js`,
+`prototype-bar.js`, `prototype-bar.css`, `update.sh`, `version.json`) taken
+from a release line — the CDN-with-local-fallback pattern:
+
+- **Deployed**, the loader takes the published release line first, so a
+  toolbar release reaches every prototype with no commit in it; the vendored
+  copy is the fallback if that fails to load.
+- **On localhost** it takes the vendored copy first (instant, works offline).
+- The bar checks the published `version.json` and shows an **Update** hint
+  when the vendored copy is behind; `toolbar/update.sh` refreshes it (commit
+  the result). `toolbar/update.sh 2` moves a host to a new release line.
+- **Working on the toolbar itself:** `./toolbar.sh serve` in this clone, then
+  open any prototype once with `?proto-toolbar-src=http://localhost:8790/`.
+  That prototype now loads the bar from your working tree until you open it
+  with `?proto-toolbar-src=off`. Or `./toolbar.sh vendor <host>` to copy the
+  working tree into a host's `toolbar/` for a real deployed try-out.
+- Without the toolbar flag on a non-dev host the loader loads nothing: a
+  tester's page never even requests the toolbar.
+
+Adopting it in a new static prototype: create `toolbar/`, run
+`curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v1/update.sh | bash -s`
+inside it (or copy the files from another host and run `toolbar/update.sh`),
+add the two tags to every screen page, write `proto-config.js`, add the host
+to `hosts.json` here.
 
 `proto-config.js` defines `window.PROTO_TOOLBAR`. Every field is optional; a
 menu with no entries is not rendered. Functions receive the current `URL` and
@@ -208,9 +231,17 @@ fit. Fixed layers of the page can offset themselves by `--proto-bar-h` (0 while
 collapsed). Not available in this flavor, because they need a dev server:
 inline copy editing, the Piwik event layer, dev-server auto-start.
 
-## Dropping it into another project
+## Dropping it into a React/Vite project
 
-1. Copy this folder.
+1. Install it from GitHub, pinned to the release line:
+   `npm install github:effectory-ux/prototype-toolbar#semver:^1.0.0` — then
+   import `prototype-toolbar/PrototypeBar.jsx` and the vite plugins from
+   `prototype-toolbar/vite-plugin-proto-edits.js` and
+   `prototype-toolbar/vite-plugin-proto-versions.js`. `npm update
+   prototype-toolbar` moves to the newest release on that line. To work on
+   the toolbar from inside the app, set `PROTO_TOOLBAR_DEV=/path/to/this/clone`
+   when starting `vite dev`: the host's vite config aliases the package to
+   that folder (see CYOS's `phase-2/vite.config.js`).
 2. Wrap your app: `<div className="proto-shell"><PrototypeBar …/><YourApp/></div>`
 3. Pass your own config (all optional — a menu with no entries isn't rendered):
 
@@ -286,45 +317,38 @@ no menu.
 4. At boot, read the chosen start point with
    `getStartAt(storagePrefix, fallbackKey)`.
 
-## One shared toolbar across prototypes
+## One toolbar, many prototypes: releases and versions
 
-The canonical copy of this folder is the repo
-**github.com/effectory-ux/prototype-toolbar**. Every prototype that uses the
-bar embeds that whole repo as a git subtree named `toolbar/` — the list of
-those hosts is `hosts.json`. Changes happen on BOTH sides (a toolbar tweak is
-made wherever you happen to be working), and `sync.sh` moves them in both
-directions, entirely on your machine:
+The toolbar is **published, not copied**. Its source is this repo; its
+runtime is served from this repo's GitHub Pages site by `.github/workflows/pages.yml`
+(`build-site.sh`), rebuilt on every push and every release tag:
 
-```sh
-toolbar/sync.sh status            # where every host stands versus upstream
-toolbar/sync.sh in <host>         # harvest toolbar commits made inside a host into upstream
-toolbar/sync.sh out               # bring every host up to upstream HEAD (one subtree commit each)
-toolbar/sync.sh mirror            # copy the upstream WORKING TREE into every host — try an edit live
-toolbar/sync.sh watch             # keep mirroring while you edit
-toolbar/sync.sh hooks             # install post-commit hooks that run in + out automatically
-toolbar/sync.sh push              # push upstream and every host to GitHub (deploys the Pages sites)
-```
+| URL | What |
+|---|---|
+| `…/prototype-toolbar/v1/` | release line 1: the newest 1.x release — what hosts follow |
+| `…/prototype-toolbar/v1.2.3/` | one release, immutable |
+| `…/prototype-toolbar/` | the tip of main ("latest"), may be ahead of any release |
 
-With the hooks installed the flow is invisible: commit a toolbar change in
-any host or in upstream, and every other local clone has it a second later.
-Nothing is ever pushed by the hooks. Working on the toolbar itself: edit in the
-upstream clone with `sync.sh watch` running, look at any host's dev server,
-commit when it is right.
+Versions are **semver** (`package.json` is the source of truth, stamped into
+`prototype-bar.js` and `load.js` at release time): *patch* for a fix, *minor*
+for a new feature or menu, *major* when a host has to change something — a
+new config shape, a removed API, a different include. A major gets a new
+release line (`v2/`) and hosts move over deliberately (`toolbar/update.sh 2`,
+or `npm install …#semver:^2.0.0`); the old line keeps serving.
 
-Adopting the toolbar in a new prototype:
+Cutting a release is one command: `./toolbar.sh release patch|minor|major`
+(commits the bump, tags `vX.Y.Z`, pushes; Pages follows in a minute). A push
+to main without a release only moves "latest"; no prototype is affected until
+you release. So: iterate freely on main, release when it is right.
 
-```sh
-git subtree add --prefix=toolbar https://github.com/effectory-ux/prototype-toolbar.git main --squash
-```
+Keep everything host-specific OUT of this repo — keys, screens, versions,
+edge cases live in each host's own config. Everything in here must stay
+generic.
 
-then add the host to `hosts.json` (in upstream, commit, `sync.sh out`), wire
-the pages (React: see "Dropping it into another project"; static: see "Static
-prototypes"), and run `toolbar/sync.sh hooks` once.
-
-Keep everything host-specific OUT of this folder — the versions registry,
-proto-config, use cases — so a subtree pull never collides with a host's own
-setup. Everything in here must stay generic. And never mix toolbar edits and
-host edits in one commit: the harvest works per commit.
+Maintainer commands, all in `toolbar.sh`: `serve` (load your working tree in
+a prototype), `vendor` (copy it into a host's `toolbar/`), `status` (which
+version every host has), `release`, `unhook` (removes the hooks of the former
+git-subtree model). The list of hosts is `hosts.json`.
 
 ## Stacking
 

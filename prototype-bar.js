@@ -23,6 +23,7 @@
    layer, dev-server auto-start. Those stay React/Vite features. */
 (function () {
   "use strict";
+  var VERSION = "1.0.0"; /* stamped by release.sh; compared with the published version.json */
   var C = window.PROTO_TOOLBAR || {};
   var KEY = C.key || "";
   var PREFIX = C.prefix || "proto";
@@ -123,7 +124,8 @@
     /* where the prototype should open, as chosen in the Start menu */
     startAt: function (fallback) { return store.get("startAt", fallback); },
     plainLink: plainLink,
-    carry: carry
+    carry: carry,
+    version: VERSION
   };
   window.ProtoToolbar = api;
 
@@ -168,6 +170,25 @@
   var hidden = store.get("barHidden", "0") === "1";
   var openMenu = null;
   var bar = null, peek = null;
+  var updateTo = null; /* a newer published version, when this copy is behind */
+
+  /* Version check — the loader (load.js) says where the published release
+     line lives and which source actually loaded. When this copy is not the
+     published one and is behind it, the bar shows an Update hint. */
+  function cmpVer(a, b) {
+    a = String(a).split("."); b = String(b).split(".");
+    for (var i = 0; i < 3; i++) { var d = (parseInt(a[i], 10) || 0) - (parseInt(b[i], 10) || 0); if (d) return d; }
+    return 0;
+  }
+  var L = window.PROTO_TOOLBAR_LOADER;
+  if (L && L.hosted && typeof fetch === "function") {
+    setTimeout(function () { /* after the loader's fallback check has run */
+      if (L.used === L.hosted || L.used === L.override) return;
+      fetch(L.hosted + "version.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+        if (j && j.version && cmpVer(j.version, VERSION) > 0) { updateTo = j.version; api.published = j.version; if (bar) render(); }
+      }).catch(function () {});
+    }, 0);
+  }
 
   /* The bar is a real row above the page; fixed layers of the page would
      slide underneath it. Its height is published as --proto-bar-h so the host
@@ -340,6 +361,10 @@
       (variants.length ? menuButton("variants", "sliders", "Variants") : "") +
       (starts.length ? menuButton("start", "home", "Start") : "") +
       '<span class="pbar-spacer" aria-hidden="true"></span>' +
+      (updateTo
+        ? '<a class="pbar-update pbar-tt is-right" href="https://github.com/effectory-ux/prototype-toolbar/releases" target="_blank" rel="noopener" ' +
+          'data-tip="This prototype\'s copy of the toolbar is ' + VERSION + '; ' + esc(updateTo) + ' is published. Run toolbar/update.sh and commit.">Update</a>'
+        : "") +
       '<div class="pbar-menu-wrap is-right" data-menu="share">' +
       '<button class="pbar-icon pbar-tt is-right" data-tip="Share" aria-label="Share">' + ic("share") + "</button>" +
       '<div class="pbar-menu-slot"></div></div>' +
