@@ -16,7 +16,9 @@
    of overflowing, and its columns stretch to it. Set `shell: false` in the
    host config to opt out and let the bar be a plain block above the page. */
 body.proto-shell > :not(.pbar):not(.pbar-peek):not(script):not(style):not(link) { flex: 1 1 auto; min-height: 0; }
-body.proto-shell .app { height: auto; }
+/* The app shell may sit inside a wrapper (#root), so size it explicitly to
+   what is left under the bar rather than trusting flex to reach it. */
+body.proto-shell .app { height: calc(100vh - var(--proto-bar-h, 0px)); }
 body.proto-shell .app > * { height: auto; }
 .pbar-i { display: flex; flex: none; }
 .pbar-menu-sub { margin-top: 4px; border-top: 1px solid #2a2f39; padding-top: 8px; }
