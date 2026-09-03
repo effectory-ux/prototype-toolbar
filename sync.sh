@@ -133,7 +133,9 @@ cmd_in() {
 #             toolbar/ with upstream and records the subtree markers, so the
 #             next pull is a plain merge and `subtree split` maps back cleanly
 pull_mode() { # <host path>
-  if git -C "$1" log --format=%s | grep -q "^Squashed 'toolbar/' content"; then echo squash
+  # (no pipe into grep here: with pipefail, grep -q closing the pipe early
+  # would fail the test even on a match)
+  if [ -n "$(git -C "$1" log -1 --format=%h --grep="^Squashed 'toolbar/' content")" ]; then echo squash
   elif [ -n "$(git -C "$1" merge-base HEAD FETCH_HEAD 2>/dev/null)" ]; then echo merge
   else echo graft; fi
 }
