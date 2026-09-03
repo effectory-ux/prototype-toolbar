@@ -53,6 +53,19 @@ host_dirty()   { [ -n "$(git -C "$1" status --porcelain -- toolbar)" ]; }
 has_toolbar()  { [ -d "$1/toolbar" ] && [ -n "$(host_tree "$1")" ]; }
 # Is the host's toolbar/ working tree byte-identical to upstream's?
 same_as_up()   { diff -rq -x .git "$UP" "$1/toolbar" >/dev/null 2>&1; }
+# git subtree refuses to run in a repo with uncommitted TRACKED changes, even
+# unrelated ones. Park those in the stash for the duration of one operation
+# and put them back afterwards (untracked files stay where they are).
+with_clean_tree() { # <repo> <command...>
+  local r="$1"; shift
+  local stashed=0 rc=0
+  if [ -n "$(git -C "$r" status --porcelain --untracked-files=no)" ]; then
+    git -C "$r" stash push -q -m "sync.sh: parked edits during a toolbar sync" && stashed=1
+  fi
+  "$@" || rc=$?
+  [ "$stashed" = 1 ] && { git -C "$r" stash pop -q || say "  ($r: could not restore parked edits — see git stash list)"; }
+  return $rc
+}
 
 check_host() {
   local n="$1" p; p="$(hpath "$n")"
@@ -100,12 +113,9 @@ cmd_in() {
     split="$(git -C "$p" subtree split --prefix=toolbar 2>/dev/null)" || { say "  $n: git subtree split failed"; continue; }
     git -C "$UP" fetch -q "$p" "$split" 2>/dev/null || { say "  $n: could not fetch split $split from $p"; continue; }
     if git -C "$UP" merge-base --is-ancestor "$split" HEAD; then note "  $n: nothing new for upstream"; continue; fi
-    if [ -n "$(git -C "$UP" status --porcelain)" ]; then
-      say "  $n: upstream has uncommitted changes — commit or stash them in $UP first"; continue
-    fi
-    if git -C "$UP" merge -q --ff-only "$split" 2>/dev/null; then
+    if with_clean_tree "$UP" git -C "$UP" merge -q --ff-only "$split" 2>/dev/null; then
       say "  $n: upstream fast-forwarded to $(git -C "$UP" log -1 --format='%h %s')"
-    elif git -C "$UP" merge -q --no-edit -m "Merge toolbar changes made in $n" "$split"; then
+    elif with_clean_tree "$UP" git -C "$UP" merge -q --no-edit -m "Merge toolbar changes made in $n" "$split"; then
       say "  $n: merged into upstream → $(git -C "$UP" log -1 --format='%h %s')"
     else
       git -C "$UP" merge --abort 2>/dev/null || true
@@ -115,6 +125,13 @@ cmd_in() {
 }
 
 # ---- out: upstream → hosts --------------------------------------------------------
+# A host that was squash-added pulls squashed; the origin host (CYOS, whose
+# history the upstream was split from) cannot squash and merges instead.
+pull_host() { # <host path> <subject>
+  git -C "$1" subtree pull -q --prefix=toolbar "$UP" main --squash -m "Pull the shared toolbar: $2" >/dev/null 2>&1 \
+    || { git -C "$1" merge --abort >/dev/null 2>&1 || true
+         git -C "$1" subtree pull -q --prefix=toolbar "$UP" main -m "Pull the shared toolbar: $2" >/dev/null 2>&1; }
+}
 cmd_out() {
   local except="" n
   [ "${1:-}" = "--except" ] && except="${2:-}"
@@ -138,8 +155,7 @@ cmd_out() {
       say "  $n: has toolbar commits upstream lacks — run sync.sh in $n first"; continue
     fi
     local subj; subj="$(git -C "$UP" log -1 --format='%s')"
-    if git -C "$p" subtree pull -q --prefix=toolbar "$UP" main --squash -m "Pull the shared toolbar: $subj" >/dev/null 2>&1 \
-       || git -C "$p" subtree pull -q --prefix=toolbar "$UP" main -m "Pull the shared toolbar: $subj" >/dev/null 2>&1; then
+    if with_clean_tree "$p" pull_host "$p" "$subj"; then
       say "  $n: pulled → $(git -C "$p" log -1 --format='%h %s')"
     else
       git -C "$p" merge --abort 2>/dev/null || true
