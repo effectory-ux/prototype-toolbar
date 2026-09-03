@@ -37,6 +37,51 @@ the key in the host's config invalidates every toolbar link handed out so far.
 Inline copy editing is dev-only by an explicit host check, not by a failed
 request: a deployed prototype never shows the Edit button.
 
+## The link contract — every toolbar, every port
+
+The gating above is not a feature of this React bar; it is the contract for ANY
+prototype that carries a toolbar, including ports of this bar to other stacks
+(e.g. the vanilla-JS port in `question-library-v3`). One prototype must always
+yield two kinds of links without deploying anything twice:
+
+- **Colleague link** — the current URL *with* `?<toolbarKey>-toolbar-active`:
+  whoever opens it gets the toolbar (designers, PMs, developers walking the
+  states).
+- **Tester link** — the same URL *without* the flag: the plain prototype. No
+  toolbar, no peek tab, no keyboard shortcut, no rendered-then-hidden DOM — a
+  participant can never stumble into the tooling.
+
+Rules a port must keep:
+
+1. **Dev hosts** (`localhost`, `127.0.0.1`, `*.local`, LAN IPs) always show the
+   bar, no flag needed — nothing to remember while building.
+2. **Anywhere else** the bar exists only when the URL carries the flag. The
+   check gates *rendering*, not visibility: without the flag, none of the bar's
+   DOM, listeners, or shortcuts may be installed.
+3. **Mint the key once per prototype** (an opaque id like `ql-3a7k`), never
+   reuse one across prototypes. Rotating the key invalidates every toolbar
+   link handed out so far — that is the kill switch, so there is no other
+   off switch.
+4. **Carry the flag along**: every navigation the toolbar itself performs
+   (version switch, screen jump, edge-case reload) must preserve the query
+   string, so the bar doesn't vanish mid-walkthrough on a multi-page
+   prototype.
+5. **Share strips the flag**: the share/copy affordance produces the tester
+   link (URL minus flag) — handing out a clean link must never require
+   editing a URL by hand.
+
+The reference implementation of the check:
+
+```js
+const FLAG = `${TOOLBAR_KEY}-toolbar-active`;
+const isDevHost = () =>
+  ["localhost", "127.0.0.1"].includes(location.hostname) ||
+  /\.local$/.test(location.hostname) || /^192\.168\./.test(location.hostname);
+const barActive = () =>
+  isDevHost() || new URLSearchParams(location.search).has(FLAG);
+if (!barActive()) return; // render nothing at all
+```
+
 ## What lives here
 
 - `PrototypeBar.jsx` — the component. No imports from the host app.
