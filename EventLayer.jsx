@@ -8,7 +8,7 @@
 // and a live log that shows events firing as you use the prototype —
 // including funnels starting, completing or being abandoned.
 //
-// Like the rest of src/proto/ this is TOOLING, not product UI: dark, compact,
+// Like the rest of this folder this is TOOLING, not product UI: dark, compact,
 // self-contained, and it never intercepts the prototype's own interactions —
 // the fired log listens on the capture phase and touches nothing.
 import { useState, useEffect, useRef } from "react";

@@ -1,0 +1,11 @@
+{
+  "_comment": "Every prototype that embeds this toolbar as a git subtree at toolbar/. `path` is the local clone on this machine (~ allowed); sync.sh reads this file. Add a host here when you adopt the toolbar in a new prototype.",
+  "upstream": { "repo": "effectory-ux/prototype-toolbar", "path": "~/Claude/prototype-toolbar" },
+  "hosts": [
+    { "name": "cyos",              "repo": "effectory-ux/cyos",              "path": "~/Claude/Projects/CYOS",              "flavor": "react" },
+    { "name": "question-library",  "repo": "effectory-ux/question-library",  "path": "~/Claude/question-library-v3",        "flavor": "static" },
+    { "name": "gtma",              "repo": "effectory-ux/gtma",              "path": "~/Claude/Projects/gtma-repo",         "flavor": "static" },
+    { "name": "group-linking",     "repo": "effectory-ux/group-linking",     "path": "~/Claude/Projects/group-linking",     "flavor": "static" },
+    { "name": "results-dashboard", "repo": "effectory-ux/results-dashboard", "path": "~/Claude/Projects/results-dashboard", "flavor": "static" }
+  ]
+}

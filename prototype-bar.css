@@ -1,4 +1,5 @@
-/* prototype-bar.css — styles for the prototype toolbar (src/proto/).
+/* prototype-bar.css — styles for the prototype toolbar (PrototypeBar.jsx and
+   its vanilla twin prototype-bar.js share this one file).
    Self-contained: no tokens or classes from the host app's design system, so
    the folder can be lifted into another project as-is. Dark and compact on
    purpose — tooling must never be mistaken for product UI.
@@ -9,6 +10,16 @@
    the prototype itself stacks (sticky bars, overlays and dialogs included) —
    raise it if a host app ever exceeds that. */
 .proto-shell { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+/* Static prototypes (prototype-bar.js) have no wrapper to hand out, so the
+   shell is the <body> itself: bar on top, the page below gets the remaining
+   height. The design-system app shell (`.app`, 100vh) shrinks to fit instead
+   of overflowing, and its columns stretch to it. Set `shell: false` in the
+   host config to opt out and let the bar be a plain block above the page. */
+body.proto-shell > :not(.pbar):not(.pbar-peek):not(script):not(style):not(link) { flex: 1 1 auto; min-height: 0; }
+body.proto-shell .app { height: auto; }
+body.proto-shell .app > * { height: auto; }
+.pbar-i { display: flex; flex: none; }
+.pbar-menu-sub { margin-top: 4px; border-top: 1px solid #2a2f39; padding-top: 8px; }
 
 /* ---- Prototype toolbar (tooling, NOT product UI) -------------------------
    A real full-width row ABOVE the prototype, not an overlay: the app below is

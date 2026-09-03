@@ -1,7 +1,7 @@
 // PrototypeBar.jsx — a prototype's own toolbar, in the spirit of the Figma /
 // Claude Design prototype chrome.
 //
-// This folder (src/proto/) is deliberately self-contained so it can be lifted
+// This folder (toolbar/ in a host repo) is deliberately self-contained so it can be lifted
 // into another project or a skill as-is: the component, its stylesheet and its
 // inlined icons live here, and everything project-specific (which use cases,
 // edge cases and start points exist) comes in as props. See README.md.
