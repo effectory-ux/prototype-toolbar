@@ -1,6 +1,6 @@
 {
   "name": "prototype-toolbar",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "The prototype toolbar Effectory UX prototypes share: use cases, edge cases, variants, start points, inline copy editing, Piwik event specs, version switching. Static pages load it from GitHub Pages via load.js; React/Vite prototypes install this package from GitHub.",
   "type": "module",
   "private": true,
