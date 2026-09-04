@@ -48,7 +48,8 @@ const now = () => new Date().toISOString();
 
 export function createDiscovery({ prefix = "proto", routeKey: keyFn = routeKey } = {}) {
   const storeKey = prefix + ".discovered";
-  let entries = {};
+  let entries = Object.create(null); // null prototype: a route named "__proto__" is just a key
+  let dispose = null;
   let canWrite = false, pendingVia = null, pendingAt = 0, timer = null, onChange = () => {}, booted = false;
 
   const load = () => { try { merge(JSON.parse(localStorage.getItem(storeKey) || "{}")); } catch (_) {} };
@@ -56,7 +57,7 @@ export function createDiscovery({ prefix = "proto", routeKey: keyFn = routeKey }
   const merge = (incoming) => {
     Object.values(incoming || {}).forEach(e => {
       if (!e || !e.route) return;
-      const cur = entries[e.route];
+      const cur = Object.prototype.hasOwnProperty.call(entries, e.route) ? entries[e.route] : undefined;
       if (!cur) { entries[e.route] = { ...e, via: { ...(e.via || {}) } }; return; }
       cur.count = Math.max(cur.count || 0, e.count || 0);
       if (e.firstSeen && (!cur.firstSeen || e.firstSeen < cur.firstSeen)) cur.firstSeen = e.firstSeen;
@@ -78,7 +79,8 @@ export function createDiscovery({ prefix = "proto", routeKey: keyFn = routeKey }
   const record = () => {
     const raw = current();
     const key = keyFn(raw);
-    const e = entries[key] || (entries[key] = { route: key, example: raw, label: routeLabel(key), count: 0, firstSeen: now(), via: {} });
+    const e = Object.prototype.hasOwnProperty.call(entries, key) ? entries[key]
+      : (entries[key] = { route: key, example: raw, label: routeLabel(key), count: 0, firstSeen: now(), via: {} });
     e.count += 1; e.lastSeen = now(); e.example = raw;
     if (pendingVia && Date.now() - pendingAt < 4000) { e.via[pendingVia] = true; pendingVia = null; }
     persistLocal(); push(); onChange();
@@ -88,12 +90,26 @@ export function createDiscovery({ prefix = "proto", routeKey: keyFn = routeKey }
 
   const api = {
     // Boot: read what is already known (dev server → static file → localStorage),
-    // then start watching the route. `cb` fires on every change.
-    async init(cb) {
+    // then start watching the route. `cb` fires on every change. Returns a
+    // disposer that removes the listeners (a React effect cleanup).
+    init(cb) {
       onChange = cb || (() => {});
-      if (booted) { onChange(); return; } // React StrictMode / HMR may call twice
+      if (booted) { onChange(); return dispose; } // React StrictMode / HMR may call twice
       booted = true;
       load();
+      window.addEventListener("hashchange", scheduleRecord);
+      window.addEventListener("popstate", scheduleRecord);
+      window.addEventListener("proto:route", scheduleRecord);
+      dispose = () => {
+        window.removeEventListener("hashchange", scheduleRecord);
+        window.removeEventListener("popstate", scheduleRecord);
+        window.removeEventListener("proto:route", scheduleRecord);
+        clearTimeout(debounce); clearTimeout(timer); booted = false;
+      };
+      api.boot();
+      return dispose;
+    },
+    async boot() {
       let data = null;
       try {
         if (!isDevHost()) throw 0;
@@ -103,11 +119,9 @@ export function createDiscovery({ prefix = "proto", routeKey: keyFn = routeKey }
       if (!data) { try { const r = await fetch(STATIC_FILE); if (r.ok) data = await r.json(); } catch (_) {} }
       if (data && data.entries) merge(data.entries);
       // Routes are written with replaceState as often as with the hash, so
-      // watch both; History has no event of its own.
-      window.addEventListener("hashchange", scheduleRecord);
-      window.addEventListener("popstate", scheduleRecord);
-      // Patch History once per page, whatever re-evaluates this module; every
-      // discovery instance listens to the one event it dispatches.
+      // watch both; History has no event of its own. Patched once per page,
+      // whatever re-evaluates this module: every instance listens to the one
+      // "proto:route" event it dispatches.
       if (!history.__protoRoutePatched) {
         history.__protoRoutePatched = true;
         ["pushState", "replaceState"].forEach(m => {
@@ -115,7 +129,6 @@ export function createDiscovery({ prefix = "proto", routeKey: keyFn = routeKey }
           history[m] = function () { const r = orig.apply(this, arguments); window.dispatchEvent(new Event("proto:route")); return r; };
         });
       }
-      window.addEventListener("proto:route", scheduleRecord);
       scheduleRecord();
       onChange();
     },
@@ -136,12 +149,16 @@ export function createDiscovery({ prefix = "proto", routeKey: keyFn = routeKey }
 // before the app reads its first hash. Runs at import time on purpose — that
 // is the only moment early enough — and only when the toolbar is active.
 const startKey = () => "proto.startRoute@" + window.location.origin + window.location.pathname;
-export const getStartRoute = () => { try { return localStorage.getItem(startKey()); } catch (_) { return null; } };
-export const setStartRoute = (route) => { try { route ? localStorage.setItem(startKey(), route) : localStorage.removeItem(startKey()); } catch (_) {} };
+const readStart = () => { try { const v = JSON.parse(localStorage.getItem(startKey()) || "null"); return v && typeof v === "object" ? v : (v ? { route: String(v), key: "" } : null); } catch (_) { return null; } };
+export const getStartRoute = () => { const v = readStart(); return v ? v.route : null; };
+// `key` is the host's toolbar key: the start applies only when the bar would
+// show (flagged URL for a keyed host, any dev host otherwise).
+export const setStartRoute = (route, key = "") => { try { route ? localStorage.setItem(startKey(), JSON.stringify({ route, key })) : localStorage.removeItem(startKey()); } catch (_) {} };
 (function applyStartRoute() {
   try {
-    if (!(isDevHost() || /-toolbar-active/.test(window.location.search))) return;
-    const r = getStartRoute();
-    if (r && !window.location.hash && r.startsWith("#")) window.location.replace(window.location.pathname + window.location.search + r);
+    const v = readStart();
+    if (!v || !v.route || window.location.hash || !v.route.startsWith("#")) return;
+    const shown = v.key ? new URLSearchParams(window.location.search).has(v.key + "-toolbar-active") : isDevHost();
+    if (shown) window.location.replace(window.location.pathname + window.location.search + v.route);
   } catch (_) {}
 })();

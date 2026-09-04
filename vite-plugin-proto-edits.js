@@ -23,10 +23,10 @@ export function protoEdits({ file = "public/proto-edits.json", historyFile = "pr
   // Union of what the browser knows and what is on disk: another browser or
   // an earlier session may have seen screens this one has not.
   const mergeDisc = (prev, incoming) => {
-    const out = { ...(prev.entries || {}) };
+    const out = Object.assign(Object.create(null), prev.entries || {}); // null prototype: "__proto__" is just a route
     Object.values(incoming || {}).forEach(e => {
       if (!e || !e.route) return;
-      const cur = out[e.route];
+      const cur = Object.prototype.hasOwnProperty.call(out, e.route) ? out[e.route] : undefined;
       if (!cur) { out[e.route] = { ...e, via: { ...(e.via || {}) } }; return; }
       cur.count = Math.max(cur.count || 0, e.count || 0);
       if (e.firstSeen && (!cur.firstSeen || e.firstSeen < cur.firstSeen)) cur.firstSeen = e.firstSeen;
@@ -34,6 +34,20 @@ export function protoEdits({ file = "public/proto-edits.json", historyFile = "pr
       cur.via = { ...(cur.via || {}), ...(e.via || {}) };
     });
     return out;
+  };
+  // Only the page this server serves may write: a JSON content type (so a
+  // cross-site form or text POST needs a preflight, which the 405 below
+  // refuses) and, when the browser sends an Origin, one naming this server.
+  const acceptPost = (req, res) => {
+    const ct = String(req.headers["content-type"] || ""), origin = req.headers.origin;
+    const ok = /^application\/json\b/.test(ct) && (!origin || origin === `http://${req.headers.host}` || origin === `https://${req.headers.host}`);
+    if (!ok) { res.statusCode = 403; res.end('{"proto":true,"ok":false}'); }
+    return ok;
+  };
+  const readBody = (req, res, done) => {
+    let body = "";
+    req.on("data", (c) => { body += c; if (body.length > 2e6) { res.statusCode = 413; res.end('{"proto":true,"ok":false}'); req.destroy(); } });
+    req.on("end", () => done(body));
   };
   return {
     name: "proto-edits",
@@ -55,9 +69,8 @@ export function protoEdits({ file = "public/proto-edits.json", historyFile = "pr
         res.setHeader("Content-Type", "application/json");
         if (req.method === "GET") { res.end(JSON.stringify({ proto: true, ...readDisc() })); return; }
         if (req.method === "POST") {
-          let body = "";
-          req.on("data", (c) => { body += c; });
-          req.on("end", () => {
+          if (!acceptPost(req, res)) return;
+          readBody(req, res, (body) => {
             try {
               const data = JSON.parse(body);
               if (!data.entries || typeof data.entries !== "object") throw new Error("bad shape");
@@ -83,9 +96,8 @@ export function protoEdits({ file = "public/proto-edits.json", historyFile = "pr
           return;
         }
         if (req.method === "POST") {
-          let body = "";
-          req.on("data", (c) => { body += c; });
-          req.on("end", () => {
+          if (!acceptPost(req, res)) return;
+          readBody(req, res, (body) => {
             try {
               const data = JSON.parse(body);
               if (!Array.isArray(data.edits)) throw new Error("bad shape");

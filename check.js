@@ -11,9 +11,12 @@ import fs from "node:fs";
 import path from "node:path";
 const dir = path.resolve(process.argv[2] || ".");
 const file = path.join(dir, "public", "proto-discovered.json");
-let data;
-try { data = JSON.parse(fs.readFileSync(file, "utf8")); }
+let raw;
+try { raw = fs.readFileSync(file, "utf8"); }
 catch (_) { console.log(`check: no ${path.relative(process.cwd(), file)} yet — use the prototype on its dev server first`); process.exit(0); }
+let data;
+try { data = JSON.parse(raw); }
+catch (e) { console.error(`check: ${path.relative(process.cwd(), file)} is not valid JSON (${e.message})`); process.exit(2); }
 const all = Object.values(data.entries || {});
 const unreg = all.filter(e => !Object.keys(e.via || {}).length).sort((a, b) => (b.count || 0) - (a.count || 0));
 const reg = all.length - unreg.length;

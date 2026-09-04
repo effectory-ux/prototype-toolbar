@@ -98,18 +98,21 @@ export function PrototypeBar(props) {
   const versions = props.versions ?? c.versions ?? c.VERSIONS ?? [];
   const { edges = {}, varState = {}, onUseCase = () => {}, onToggleEdge = () => {}, onToggleVariant = () => {} } = props;
   const version = currentVersion(versions);
+  // Without the flag (or off a dev host) the bar installs NOTHING: no DOM, no
+  // listeners, no shortcut, no discovery. Every effect below checks this.
+  const active = barActive(toolbarKey);
   // Discovery: one instance per bar, booted once; re-render when it learns.
   const discRef = useRef(null);
   if (!discRef.current) discRef.current = createDiscovery({ prefix: storagePrefix, routeKey: props.routeKey });
   const disc = discRef.current;
   const [, setSeen] = useState(0);
-  useEffect(() => { disc.init(() => setSeen(n => n + 1)); }, []); // eslint-disable-line
+  useEffect(() => { if (!active) return; return disc.init(() => setSeen(n => n + 1)); }, []); // eslint-disable-line
   const unregistered = disc.unregistered();
   const [startRoute, setStartRouteState] = useState(() => getStartRoute());
   const startHere = () => {
     const here = disc.current();
     const next = startRoute === here ? null : here;
-    setStartRoute(next); setStartRouteState(next);
+    setStartRoute(next, toolbarKey); setStartRouteState(next);
     // A route start replaces the registered start point (the app's own start
     // logic stays out of the way), and vice versa.
     if (next && startPoints[0]) { setStart(startPoints[0].key); setStartAt(storagePrefix, startPoints[0].key); }
@@ -164,6 +167,7 @@ export function PrototypeBar(props) {
   // a CSS variable lets the host offset its overlays by exactly that much.
   const barRef = useRef(null);
   useEffect(() => {
+    if (!active) return;
     const set = () => {
       const h = hidden || !barRef.current ? 0 : Math.round(barRef.current.getBoundingClientRect().height);
       document.documentElement.style.setProperty("--proto-bar-h", h + "px");
@@ -179,6 +183,7 @@ export function PrototypeBar(props) {
   // Ctrl+` toggles the bar — no browser binds it, and it can't collide with
   // typing because we ignore the shortcut while a field has focus.
   useEffect(() => {
+    if (!active) return;
     const h = (e) => {
       const t = e.target;
       const typing = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
@@ -233,14 +238,15 @@ export function PrototypeBar(props) {
   const pickStart = (key) => { setStart(key); setStartAt(storagePrefix, key); setStartRoute(null); setStartRouteState(null); setMenu(null); };
   /* Start column in the Screens menu: one switch at a time */
   const startOn = (key) => { setStart(key); setStartAt(storagePrefix, key); setStartRoute(null); setStartRouteState(null); };
-  const startOnRoute = (route) => { setStartRoute(route); setStartRouteState(route); };
+  const startOnRoute = (route) => { setStartRoute(route, toolbarKey); setStartRouteState(route); };
   const resetStart = () => { setStart(null); setStartAt(storagePrefix, ""); setStartRoute(null); setStartRouteState(null); };
   /* the default start is the first screen (or the one marked default: true); its switch is on until another is chosen */
   const defaultStartKey = (useCases.find(u => u.default) || useCases[0] || {}).key;
-  const activeStart = startRoute ? null : (start || defaultStartKey);
+  // `start` may hold a legacy start-point key; the Screens column only knows use cases.
+  const activeStart = startRoute ? null : (useCases.some(u => u.key === start) ? start : defaultStartKey);
   const offCount = edgeCases.filter(e => edges[e.key] !== e.on).length;
 
-  if (!barActive(toolbarKey)) return null;
+  if (!active) return null;
 
   if (hidden) {
     return (

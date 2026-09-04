@@ -30,8 +30,9 @@ const STATIC_FILE = "proto-edits.json";
 export function isDevHost() {
   try {
     const h = window.location.hostname;
+    // The same list as prototype-bar.js / load.js: keep the three in step.
     return ["localhost", "127.0.0.1", "0.0.0.0", "[::1]"].includes(h)
-      || h.endsWith(".local") || /^(10|192\.168)\./.test(h);
+      || h.endsWith(".local") || /^(10|192\.168)\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
   } catch (_) { return false; }
 }
 

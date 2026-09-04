@@ -26,12 +26,13 @@
   var VERSION = "1.1.0"; /* stamped by release.sh; compared with the published version.json */
   var C = window.PROTO_TOOLBAR || {};
   var KEY = C.key || "";
-  var PREFIX = C.prefix || "proto";
+  var PREFIX = C.prefix || C.key || "proto"; /* storage namespace: prototypes on one origin must not share it */
+  var MY_SRC = (document.currentScript && document.currentScript.src) || ""; /* which source loaded this copy */
   var FLAG = KEY + "-toolbar-active";
 
   function isDevHost() {
     var h = location.hostname;
-    return h === "localhost" || h === "127.0.0.1" || /\.local$/.test(h) ||
+    return h === "localhost" || h === "127.0.0.1" || h === "0.0.0.0" || h === "[::1]" || /\.local$/.test(h) ||
       /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
   }
   /* The link decides, everywhere: a host that minted a key shows the bar only
@@ -105,8 +106,8 @@
     if (!C.live) return null;
     try {
       var u = new URL(C.live);
-      if (opts.page) { u.pathname = u.pathname.replace(/\/?$/, "/") + relPath(); u.hash = location.hash; }
-      if (opts.toolbar && KEY) u.search = "?" + FLAG;
+      if (opts.page) { u.pathname = u.pathname.replace(/\/?$/, "/") + relPath(); u.search = new URL(plainLink()).search; u.hash = location.hash; }
+      if (opts.toolbar && KEY) u.search = (u.search ? u.search + "&" : "?") + FLAG;
       return u.toString();
     } catch (e) { return null; }
   }
@@ -115,8 +116,9 @@
   var api = {
     active: barActive(),
     isDevHost: isDevHost,
-    /* a host's own programmatic navigation keeps the bar: location.href = ProtoToolbar.carry(url) */
-    carry: function (href) { return carry(resolve(href)); },
+    /* a host's own programmatic navigation keeps the bar: location.href = ProtoToolbar.carry(url).
+       Resolved the way the host's browser would — against the document's <base>. */
+    carry: function (href) { try { return carry(new URL(resolve(href), document.baseURI).toString()); } catch (e) { return href; } },
     /* edge case on/off (persisted; `on` in the config is the default) */
     edge: function (key) { var d = byKey(C.edgeCases, key); var v = store.get("edge." + key, null); return v === null ? !!(d && d.on) : v === "1"; },
     /* design variant on/off (persisted unless the variant is URL-based) */
@@ -134,7 +136,6 @@
     /* every page this prototype has shown in this browser: { path, title, count, lastSeen } */
     seen: function () { try { return JSON.parse(store.get("seen", "{}")); } catch (e) { return {}; } },
     plainLink: plainLink,
-    carry: carry,
     version: VERSION
   };
   /* The host's own same-origin links carry the flag too (capture phase, before
@@ -173,7 +174,7 @@
     var listed = {};
     screens.forEach(function (s) { try { listed[new URL(resolve(s.href), location.href).pathname] = true; } catch (e) {} });
     return Object.keys(seen)
-      .filter(function (p) { return !listed[p] && p !== location.pathname; })
+      .filter(function (p) { return p.charAt(0) === "/" && !listed[p] && p !== location.pathname; })
       .map(function (p) { return seen[p]; })
       .sort(function (a, b) { return (b.lastSeen || "").localeCompare(a.lastSeen || ""); });
   }
@@ -231,7 +232,7 @@
   var L = window.PROTO_TOOLBAR_LOADER;
   if (L && L.hosted && typeof fetch === "function") {
     setTimeout(function () { /* after the loader's fallback check has run */
-      if (L.used === L.hosted || L.used === L.override) return;
+      if (MY_SRC.indexOf(L.hosted) === 0 || (L.override && MY_SRC.indexOf(L.override) === 0)) return; /* this IS the published (or your own) copy */
       fetch(L.hosted + "version.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
         if (j && j.version && cmpVer(j.version, VERSION) > 0) { updateTo = j.version; api.published = j.version; if (bar) render(); }
       }).catch(function () {});

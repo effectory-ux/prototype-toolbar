@@ -84,7 +84,7 @@ const isDevHost = () =>
   ["localhost", "127.0.0.1"].includes(location.hostname) ||
   /\.local$/.test(location.hostname) || /^192\.168\./.test(location.hostname);
 const barActive = () =>
-  isDevHost() || new URLSearchParams(location.search).has(FLAG);
+  TOOLBAR_KEY ? new URLSearchParams(location.search).has(FLAG) : isDevHost();
 if (!barActive()) return; // render nothing at all
 ```
 
@@ -123,7 +123,7 @@ ids to `{ label, desc }`.
 
 The **Edit** button (dev server only) makes the whole prototype
 contentEditable and freezes its interactions, so any text can be clicked and
-retyped — open the state you want to edit first (the Use cases menu exists for
+retyped — open the state you want to edit first (the Screens menu exists for
 exactly that). Editing is TEXT-ONLY by construction: the selection is clamped
 to a single text node (you can't select across elements or grab an icon or
 button as an object) and every edit is applied by the tool itself to the text
@@ -187,10 +187,10 @@ from a release line — the CDN-with-local-fallback pattern:
   the result). `toolbar/update.sh 2` moves a host to a new release line.
 - **Working on the toolbar itself:** `./toolbar.sh serve` in this clone, then
   open any prototype once with `?proto-toolbar-src=http://localhost:8790/`.
-  That prototype now loads the bar from your working tree until you open it
+  Every prototype on that origin now loads the bar from your working tree until you open one
   with `?proto-toolbar-src=off`. Or `./toolbar.sh vendor <host>` to copy the
   working tree into a host's `toolbar/` for a real deployed try-out.
-- Without the toolbar flag on a non-dev host the loader loads nothing: a
+- Without the toolbar flag the loader loads nothing (a host with a key, localhost included): a
   tester's page never even requests the toolbar.
 
 Adopting it in a new static prototype: create `toolbar/`, run
@@ -297,6 +297,10 @@ On a dev host the map is written to `public/proto-discovered.json` through the
 dev server (the `protoEdits` vite plugin, no extra wiring), so it is committed
 with the prototype and the deployed bar shows it too. Elsewhere it stays in the
 browser. The static flavor does the same per page (`ProtoToolbar.seen()`).
+To see route changes written with `history.replaceState`, the React bar
+patches `pushState`/`replaceState` once per page and dispatches a
+`proto:route` event — the only thing it adds to the page besides
+`window.ProtoToolbar`, and only while the bar is active.
 
 **Start is a column of the Screens menu.** Every row in Screens — registered
 screens and learned ones — has a switch: the prototype opens on the screen
@@ -305,7 +309,9 @@ default start and shows as on until another is chosen; switching the chosen one
 off goes back to the default. The chosen start is remembered per prototype in the browser (path
 plus query, so a dialog deep link like `?open=review` can be a start) and
 applied before the app reads its first hash; static prototypes read it with
-`ProtoToolbar.startPath()` in their index page. A separate Start menu only
+`ProtoToolbar.startPath()` in their index page —
+`location.replace(ProtoToolbar.carry(ProtoToolbar.startPath()))`, so the bar
+travels along. A separate Start menu only
 appears for hosts without a Screens list. Dialogs and sub-pages count as
 screens: register them with a deep-link `href` and a `match` that checks the
 query, and let the page open the dialog when it sees the parameter.
@@ -356,7 +362,7 @@ versions can share every source file with no per-version identity constant.
 Without `versions` nothing changes: the badge reads "Toolbar" and there is
 no menu.
 
-4. At boot, read the chosen start point with
+At boot, a host with registered start points reads the chosen one with
    `getStartAt(storagePrefix, fallbackKey)`.
 
 ## One toolbar, many prototypes: releases and versions
