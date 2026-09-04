@@ -249,6 +249,7 @@
       '<span class="pbar-row-side"><button class="pbar-start' + (startOn ? " is-on" : "") + '" role="switch" aria-checked="' + startOn + '" ' + startAttrs +
       ' aria-label="Start here" title="' + (startOn ? "The prototype opens here — switch off for the default start" : "Open the prototype here") + '"><span class="pbar-switch" aria-hidden="true"></span></button></span></div>';
   }
+  function defaultScreen() { return screens.filter(function (s) { return s.default; })[0] || screens[0] || null; }
   /* where the current page lives, without the toolbar flag: what a start remembers */
   function herePath() { try { var u = new URL(api.plainLink()); return u.pathname + u.search; } catch (e) { return location.pathname; } }
   function pathOf(href) { try { var u = new URL(href, location.href); return u.pathname + u.search; } catch (e) { return String(href); } }
@@ -283,15 +284,19 @@
     screens: {
       /* every screen, with a Start column: the radio marks where the prototype
          opens (one at a time; the top row resets to the prototype's own start) */
+      /* the default start is the first screen (or the one marked default: true):
+         its switch is on until another screen is chosen */
       html: function () {
-        var sp = api.startPath(), sk = store.get("startAt", ""), any = !!(sp || sk);
+        var sp = api.startPath(), sk = store.get("startAt", ""), custom = !!(sp || sk);
+        var d = defaultScreen(), defaultPath = d ? pathOf(resolve(d.href)) : "";
+        var active = sp || (sk ? "" : defaultPath);
         var out = '<div class="pbar-menu-head pbar-cols"><span>Screens</span>' +
-          '<button class="pbar-reset' + (any ? "" : " is-off") + '" data-start-default' + (any ? "" : " disabled") +
-          ' title="' + (any ? "Back to the prototype's own first page" : "The prototype opens on its own first page") + '">Reset start</button></div>';
+          '<button class="pbar-reset' + (custom ? "" : " is-off") + '" data-start-default' + (custom ? "" : " disabled") +
+          ' title="' + (custom ? "Back to the default start" : "The prototype opens on its default start") + '">Reset start</button></div>';
         screens.forEach(function (s) {
           var href = resolve(s.href), p = pathOf(href);
           var cur = s.match !== undefined ? matches(s.match) : samePage(href);
-          out += screenRow(href, s.label, s.desc, cur, sp === p, 'data-start-path="' + esc(p) + '"');
+          out += screenRow(href, s.label, s.desc, cur, p === active, 'data-start-path="' + esc(p) + '"' + (p === defaultPath ? " data-default" : ""));
         });
         if (starts.length) {
           out += '<div class="pbar-menu-head pbar-menu-sub">Start points</div>';
@@ -309,7 +314,11 @@
         function setStart(path, key) { store.set("startPath", path || ""); store.set("startAt", key || ""); reopen(); }
         slot.querySelectorAll("[data-start-default]").forEach(function (b) { b.addEventListener("click", function () { setStart("", ""); }); });
         slot.querySelectorAll("[data-start-path]").forEach(function (b) {
-          b.addEventListener("click", function () { setStart(b.classList.contains("is-on") ? "" : b.getAttribute("data-start-path"), ""); });
+          b.addEventListener("click", function () {
+            /* the default's switch stays on; any other switch on → that start, off → back to the default */
+            var on = b.classList.contains("is-on"), isDefault = b.hasAttribute("data-default");
+            setStart(on || isDefault ? "" : b.getAttribute("data-start-path"), "");
+          });
         });
         slot.querySelectorAll("[data-start-key]").forEach(function (b) { b.addEventListener("click", function () { setStart("", b.getAttribute("data-start-key")); }); });
       }
@@ -453,7 +462,7 @@
       btn.classList.add("is-open");
       var right = wrap.classList.contains("is-right");
       var slot = wrap.querySelector(".pbar-menu-slot");
-      slot.innerHTML = '<div class="pbar-scrim"></div><div class="pbar-menu' + (right ? " is-right" : "") + '">' + MENUS[key].html() + "</div>";
+      slot.innerHTML = '<div class="pbar-scrim"></div><div class="pbar-menu pbar-menu-' + key + (right ? " is-right" : "") + '">' + MENUS[key].html() + "</div>";
       slot.querySelector(".pbar-scrim").addEventListener("mousedown", closeMenus);
       MENUS[key].bind(slot, closeMenus, function () { open(wrap, key); });
     }

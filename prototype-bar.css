@@ -66,6 +66,13 @@ a.pbar-item { text-decoration: none; }
   border: 1px solid rgba(255,255,255,.16);
   box-shadow: 0 10px 30px rgba(16,22,26,.45); display: flex; flex-direction: column; gap: 1px; }
 .pbar-menu.is-right { left: auto; right: 0; }
+.pbar-menu-screens { width: 420px; }
+/* the menu's scrollbar belongs to the menu: dark, thin, inset from the rounded edge */
+.pbar-menu { scrollbar-width: thin; scrollbar-color: #3a4150 #14161a; }
+.pbar-menu::-webkit-scrollbar { width: 10px; }
+.pbar-menu::-webkit-scrollbar-track { background: transparent; }
+.pbar-menu::-webkit-scrollbar-thumb { background: #3a4150; border-radius: 999px; border: 3px solid #14161a; }
+.pbar-menu::-webkit-scrollbar-thumb:hover { background: #4b5160; }
 .pbar-menu-head { padding: 6px 8px; color: #7f8796; font-size: 10.5px; font-weight: 700;
   letter-spacing: .06em; text-transform: uppercase; }
 .pbar-share-url { padding: 2px 8px 8px; color: #9aa3b2; font-size: 11px; line-height: 1.5;
@@ -99,7 +106,8 @@ a.pbar-item { text-decoration: none; }
 .pbar-reset:hover { background: #2a2f39; color: #e7e9ec; }
 .pbar-reset.is-off { color: #4b5160; cursor: default; }
 .pbar-reset.is-off:hover { background: transparent; color: #4b5160; }
-.pbar-item.pbar-row { flex-wrap: nowrap; align-items: stretch; gap: 0; padding: 0; }
+.pbar-item.pbar-row { flex-wrap: nowrap; align-items: stretch; gap: 0; padding: 2px 0; border-radius: 0; }
+.pbar-item.pbar-row + .pbar-item.pbar-row { border-top: 1px solid #2a2f39; }
 .pbar-item.pbar-row:hover { background: transparent; }
 .pbar-row-main { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 7px 9px;
   border-radius: 7px; color: inherit; text-decoration: none; background: transparent; border: none; font: inherit; text-align: left; cursor: pointer; }
@@ -107,7 +115,7 @@ a.pbar-row-main:hover, button.pbar-row-main:hover { background: #2a2f39; }
 .pbar-row-main.is-current, span.pbar-row-main { cursor: default; }
 .pbar-row.is-current .pbar-row-main { background: #22303a; } /* the screen you're on — not a start */
 .pbar-row-main i { display: flex; margin-left: auto; color: #7ad3c8; }
-.pbar-row-side { flex: none; display: flex; align-items: center; padding: 0 6px 0 10px; margin-left: 4px; border-left: 1px solid #2a2f39; }
+.pbar-row-side { flex: none; display: flex; align-items: center; padding: 0 6px 0 10px; }
 .pbar-start { display: flex; padding: 4px; border: none; border-radius: 6px; background: transparent; cursor: pointer; }
 .pbar-start:hover { background: #2a2f39; }
 .pbar-start .pbar-switch { margin-left: 0; }

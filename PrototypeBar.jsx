@@ -237,6 +237,10 @@ export function PrototypeBar(props) {
   const startOn = (key) => { setStart(key); setStartAt(storagePrefix, key); setStartRoute(null); setStartRouteState(null); };
   const startOnRoute = (route) => { setStartRoute(route); setStartRouteState(route); };
   const resetStart = () => { setStart(null); setStartAt(storagePrefix, ""); setStartRoute(null); setStartRouteState(null); };
+  /* the default start is the first screen (or the one marked default: true); its switch is on until another is chosen */
+  const defaultStartKey = (useCases.find(u => u.default) || useCases[0] || {}).key;
+  const customStart = !!startRoute || (!!start && start !== defaultStartKey);
+  const activeStart = startRoute ? null : (start || defaultStartKey);
   const offCount = edgeCases.filter(e => edges[e.key] !== e.on).length;
 
   if (!barActive(toolbarKey)) return null;
@@ -317,13 +321,13 @@ export function PrototypeBar(props) {
           {menu === "cases" && (
             <>
               <div className="pbar-scrim" onMouseDown={() => setMenu(null)} />
-              <div className="pbar-menu">
+              <div className="pbar-menu pbar-menu-screens">
                 <div className="pbar-menu-head pbar-cols"><span>Screens</span>
-                  <button className={"pbar-reset" + (startRoute || start ? "" : " is-off")} disabled={!(startRoute || start)}
-                    title={startRoute || start ? "Back to the prototype's own first screen" : "The prototype opens on its own first screen"} onClick={resetStart}>Reset start</button>
+                  <button className={"pbar-reset" + (customStart ? "" : " is-off")} disabled={!customStart}
+                    title={customStart ? "Back to the default start" : "The prototype opens on its default start"} onClick={resetStart}>Reset start</button>
                 </div>
                 {useCases.map(c => {
-                  const on = start === c.key && !startRoute;
+                  const on = activeStart === c.key;
                   return (
                     <div key={c.key} className="pbar-item pbar-row">
                       <button className="pbar-row-main" onClick={() => pick(c.key)}>
@@ -333,7 +337,7 @@ export function PrototypeBar(props) {
                       <span className="pbar-row-side">
                         <button className={"pbar-start" + (on ? " is-on" : "")} role="switch" aria-checked={on} aria-label="Start here"
                           title={on ? "The prototype opens here — switch off for the default start" : "Open the prototype here"}
-                          onClick={() => (on ? resetStart() : startOn(c.key))}><span className="pbar-switch" aria-hidden="true" /></button>
+                          onClick={() => (on || c.key === defaultStartKey ? resetStart() : startOn(c.key))}><span className="pbar-switch" aria-hidden="true" /></button>
                       </span>
                     </div>
                   );
