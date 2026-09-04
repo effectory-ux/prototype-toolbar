@@ -245,7 +245,7 @@
       (desc ? '<span class="pbar-item-desc">' + esc(desc) + "</span>" : "");
     var main = cur ? '<span class="pbar-row-main is-current">' + inner + "</span>"
       : '<a class="pbar-row-main" href="' + esc(carry(href)) + '">' + inner + "</a>";
-    return '<div class="pbar-item pbar-row' + (cur ? " is-on" : "") + '">' + main +
+    return '<div class="pbar-item pbar-row' + (cur ? " is-current" : "") + '">' + main +
       '<span class="pbar-row-side"><button class="pbar-start' + (startOn ? " is-on" : "") + '" role="switch" aria-checked="' + startOn + '" ' + startAttrs +
       ' aria-label="Start here" title="' + (startOn ? "The prototype opens here — switch off for the default start" : "Open the prototype here") + '"><span class="pbar-switch" aria-hidden="true"></span></button></span></div>';
   }
