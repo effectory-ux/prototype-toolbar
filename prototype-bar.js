@@ -283,16 +283,14 @@
     },
     screens: {
       /* every screen, with a Start column: the radio marks where the prototype
-         opens (one at a time; the top row resets to the prototype's own start) */
+         opens (one at a time) */
       /* the default start is the first screen (or the one marked default: true):
          its switch is on until another screen is chosen */
       html: function () {
-        var sp = api.startPath(), sk = store.get("startAt", ""), custom = !!(sp || sk);
+        var sp = api.startPath(), sk = store.get("startAt", "");
         var d = defaultScreen(), defaultPath = d ? pathOf(resolve(d.href)) : "";
         var active = sp || (sk ? "" : defaultPath);
-        var out = '<div class="pbar-menu-head pbar-cols"><span>Screens</span>' +
-          '<button class="pbar-reset' + (custom ? "" : " is-off") + '" data-start-default' + (custom ? "" : " disabled") +
-          ' title="' + (custom ? "Back to the default start" : "The prototype opens on its default start") + '">Reset start</button></div>';
+        var out = '<div class="pbar-menu-head pbar-cols"><span>Screens</span><span class="pbar-col-start">Starting point</span></div>';
         screens.forEach(function (s) {
           var href = resolve(s.href), p = pathOf(href);
           var cur = s.match !== undefined ? matches(s.match) : samePage(href);
@@ -312,7 +310,6 @@
       },
       bind: function (slot, close, reopen) {
         function setStart(path, key) { store.set("startPath", path || ""); store.set("startAt", key || ""); reopen(); }
-        slot.querySelectorAll("[data-start-default]").forEach(function (b) { b.addEventListener("click", function () { setStart("", ""); }); });
         slot.querySelectorAll("[data-start-path]").forEach(function (b) {
           b.addEventListener("click", function () {
             /* the default's switch stays on; any other switch on → that start, off → back to the default */

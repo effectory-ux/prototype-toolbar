@@ -233,13 +233,12 @@ export function PrototypeBar(props) {
 
   const pick = (key) => { setMenu(null); disc.note(key); onUseCase(key); };
   const pickStart = (key) => { setStart(key); setStartAt(storagePrefix, key); setStartRoute(null); setStartRouteState(null); setMenu(null); };
-  /* Start column in the Screens menu: one radio at a time; the top row resets */
+  /* Start column in the Screens menu: one switch at a time */
   const startOn = (key) => { setStart(key); setStartAt(storagePrefix, key); setStartRoute(null); setStartRouteState(null); };
   const startOnRoute = (route) => { setStartRoute(route); setStartRouteState(route); };
   const resetStart = () => { setStart(null); setStartAt(storagePrefix, ""); setStartRoute(null); setStartRouteState(null); };
   /* the default start is the first screen (or the one marked default: true); its switch is on until another is chosen */
   const defaultStartKey = (useCases.find(u => u.default) || useCases[0] || {}).key;
-  const customStart = !!startRoute || (!!start && start !== defaultStartKey);
   const activeStart = startRoute ? null : (start || defaultStartKey);
   const offCount = edgeCases.filter(e => edges[e.key] !== e.on).length;
 
@@ -322,10 +321,7 @@ export function PrototypeBar(props) {
             <>
               <div className="pbar-scrim" onMouseDown={() => setMenu(null)} />
               <div className="pbar-menu pbar-menu-screens">
-                <div className="pbar-menu-head pbar-cols"><span>Screens</span>
-                  <button className={"pbar-reset" + (customStart ? "" : " is-off")} disabled={!customStart}
-                    title={customStart ? "Back to the default start" : "The prototype opens on its default start"} onClick={resetStart}>Reset start</button>
-                </div>
+                <div className="pbar-menu-head pbar-cols"><span>Screens</span><span className="pbar-col-start">Starting point</span></div>
                 {useCases.map(c => {
                   const on = activeStart === c.key;
                   return (

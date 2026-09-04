@@ -101,11 +101,7 @@ a.pbar-item { text-decoration: none; }
 /* Screens menu: a row is the screen (a link with its own hover) and, in a
    separate column, a switch that makes it the start. */
 .pbar-cols { display: flex; justify-content: space-between; align-items: center; }
-.pbar-reset { padding: 2px 6px; border: none; border-radius: 5px; background: transparent; color: #9aa3b2; font: inherit;
-  font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; cursor: pointer; }
-.pbar-reset:hover { background: #2a2f39; color: #e7e9ec; }
-.pbar-reset.is-off { color: #4b5160; cursor: default; }
-.pbar-reset.is-off:hover { background: transparent; color: #4b5160; }
+.pbar-col-start { text-align: right; }
 .pbar-item.pbar-row { flex-wrap: nowrap; align-items: stretch; gap: 0; padding: 2px 0; border-radius: 0; }
 .pbar-item.pbar-row + .pbar-item.pbar-row { border-top: 1px solid #2a2f39; }
 .pbar-item.pbar-row:hover { background: transparent; }

@@ -298,8 +298,8 @@ browser. The static flavor does the same per page (`ProtoToolbar.seen()`).
 **Start is a column of the Screens menu.** Every row in Screens — registered
 screens and learned ones — has a switch: the prototype opens on the screen
 whose switch is on. The first screen (or the one with `default: true`) is the
-default start and shows as on until another is chosen; switching that one off,
-or **Reset start** in the menu header, goes back to the default. The chosen start is remembered per prototype in the browser (path
+default start and shows as on until another is chosen; switching the chosen one
+off goes back to the default. The chosen start is remembered per prototype in the browser (path
 plus query, so a dialog deep link like `?open=review` can be a start) and
 applied before the app reads its first hash; static prototypes read it with
 `ProtoToolbar.startPath()` in their index page. A separate Start menu only
