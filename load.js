@@ -15,8 +15,10 @@
 
    The bar compares its own version with the published one and shows an
    Update hint when this folder's copy is behind (refresh it with update.sh).
-   Without the toolbar flag on a non-dev host nothing is loaded at all: a
-   tester's page never even requests the toolbar. */
+   The link decides who gets the bar: a host with a key loads it only for a
+   URL carrying ?<key>-toolbar-active — localhost included — so a tester's
+   page never even requests the toolbar. A host without a key gets it on dev
+   hosts. */
 (function () {
   var MAJOR = "1"; /* the release line this copy follows; update.sh keeps it in step */
   var HOSTED = "https://effectory-ux.github.io/prototype-toolbar/v" + MAJOR + "/";
@@ -29,7 +31,7 @@
   var params;
   try { params = new URLSearchParams(location.search); }
   catch (e) { params = { has: function () { return false; }, get: function () { return null; } }; }
-  if (!isDevHost() && !(C.key && params.has(C.key + "-toolbar-active"))) return;
+  if (C.key ? !params.has(C.key + "-toolbar-active") : !isDevHost()) return;
 
   var me = document.currentScript && document.currentScript.src;
   var LOCAL = me ? me.slice(0, me.lastIndexOf("/") + 1) : "toolbar/";

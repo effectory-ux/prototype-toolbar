@@ -22,12 +22,13 @@ from a host app.
 
 ## Who sees it
 
-- **Prototyping** (localhost, `127.0.0.1`, a `.local` or LAN host): the toolbar
-  is there by default. No flag to remember while you work.
-- **Anywhere else** (the deployed prototype): only for a URL carrying
-  `?<toolbarKey>-toolbar-active`, where `toolbarKey` is an id the host mints once
-  and passes in as a prop. Every other link — the one a tester or participant is
-  handed — is the plain prototype: no toolbar, no peek tab, no shortcut.
+- **The link decides, everywhere** — localhost included. The toolbar is there
+  only for a URL carrying `?<toolbarKey>-toolbar-active`, where `toolbarKey` is
+  an id the host mints once and passes in as a prop. Every other link — the one
+  a tester or participant is handed — is the plain prototype: no toolbar, no
+  peek tab, no shortcut. What you see always matches what the URL says.
+- A host **without** a key (no config) still gets the bar on dev hosts
+  (localhost, `127.0.0.1`, `.local`, LAN).
 
 There is no "off" switch: the URL without the flag is already the version
 without the toolbar.
@@ -56,11 +57,11 @@ yield two kinds of links without deploying anything twice:
 
 Rules a port must keep:
 
-1. **Dev hosts** (`localhost`, `127.0.0.1`, `*.local`, LAN IPs) always show the
-   bar, no flag needed — nothing to remember while building.
-2. **Anywhere else** the bar exists only when the URL carries the flag. The
-   check gates *rendering*, not visibility: without the flag, none of the bar's
-   DOM, listeners, or shortcuts may be installed.
+1. **The flag decides everywhere**, dev hosts included: the bar exists only
+   when the URL carries it, so a page and its address never disagree. Only a
+   host without a key falls back to "always on dev hosts".
+2. The check gates *rendering*, not visibility: without the flag, none of the
+   bar's DOM, listeners, or shortcuts may be installed.
 3. **Mint the key once per prototype** (an opaque id like `ql-3a7k`), never
    reuse one across prototypes. Rotating the key invalidates every toolbar
    link handed out so far — that is the kill switch, so there is no other
@@ -68,7 +69,9 @@ Rules a port must keep:
 4. **Carry the flag along**: every navigation the toolbar itself performs
    (version switch, screen jump, edge-case reload) must preserve the query
    string, so the bar doesn't vanish mid-walkthrough on a multi-page
-   prototype.
+   prototype. The vanilla bar also carries it on the host's own same-origin
+   links (a capture-phase click handler) and exposes `ProtoToolbar.carry(url)`
+   for a host's programmatic navigation (`location.href = ProtoToolbar.carry(url)`).
 5. **Share strips the flag**: the share/copy affordance produces the tester
    link (URL minus flag) — handing out a clean link must never require
    editing a URL by hand.

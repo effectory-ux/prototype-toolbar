@@ -49,7 +49,7 @@ const now = () => new Date().toISOString();
 export function createDiscovery({ prefix = "proto", routeKey: keyFn = routeKey } = {}) {
   const storeKey = prefix + ".discovered";
   let entries = {};
-  let canWrite = false, pendingVia = null, pendingAt = 0, timer = null, onChange = () => {};
+  let canWrite = false, pendingVia = null, pendingAt = 0, timer = null, onChange = () => {}, booted = false;
 
   const load = () => { try { merge(JSON.parse(localStorage.getItem(storeKey) || "{}")); } catch (_) {} };
   const persistLocal = () => { try { localStorage.setItem(storeKey, JSON.stringify(entries)); } catch (_) {} };
@@ -91,6 +91,8 @@ export function createDiscovery({ prefix = "proto", routeKey: keyFn = routeKey }
     // then start watching the route. `cb` fires on every change.
     async init(cb) {
       onChange = cb || (() => {});
+      if (booted) { onChange(); return; } // React StrictMode / HMR may call twice
+      booted = true;
       load();
       let data = null;
       try {
@@ -104,10 +106,16 @@ export function createDiscovery({ prefix = "proto", routeKey: keyFn = routeKey }
       // watch both; History has no event of its own.
       window.addEventListener("hashchange", scheduleRecord);
       window.addEventListener("popstate", scheduleRecord);
-      ["pushState", "replaceState"].forEach(m => {
-        const orig = history[m];
-        history[m] = function () { const r = orig.apply(this, arguments); scheduleRecord(); return r; };
-      });
+      // Patch History once per page, whatever re-evaluates this module; every
+      // discovery instance listens to the one event it dispatches.
+      if (!history.__protoRoutePatched) {
+        history.__protoRoutePatched = true;
+        ["pushState", "replaceState"].forEach(m => {
+          const orig = history[m];
+          history[m] = function () { const r = orig.apply(this, arguments); window.dispatchEvent(new Event("proto:route")); return r; };
+        });
+      }
+      window.addEventListener("proto:route", scheduleRecord);
       scheduleRecord();
       onChange();
     },

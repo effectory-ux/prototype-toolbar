@@ -13,5 +13,20 @@
     "react": {
       "optional": true
     }
-  }
+  },
+  "files": [
+    "PrototypeBar.jsx",
+    "EventLayer.jsx",
+    "icons.jsx",
+    "copyEdit.js",
+    "discover.js",
+    "versions.js",
+    "prototype-bar.css",
+    "prototype-bar.js",
+    "load.js",
+    "vite-plugin-proto-edits.js",
+    "vite-plugin-proto-versions.js",
+    "check.js",
+    "README.md"
+  ]
 }

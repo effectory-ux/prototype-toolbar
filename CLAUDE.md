@@ -23,5 +23,5 @@ step when you change behaviour or copy.
   `hosts.json`. Static hosts refresh their vendored copy with `toolbar/update.sh`,
   CYOS with `npm update prototype-toolbar` (per phase).
 - Never push to a host repo from here. `release` pushes only this repo.
-- Tests: `node --check prototype-bar.js load.js`, `bash build-site.sh /tmp/x`,
+- Tests: `node --check prototype-bar.js load.js discover.js check.js`, `bash build-site.sh /tmp/x`,
   then look at one static host and CYOS phase-2 with the bar.

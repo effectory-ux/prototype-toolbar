@@ -21,17 +21,15 @@ import { EventLayer } from "./EventLayer.jsx";
 import { createDiscovery, getStartRoute, setStartRoute } from "./discover.js";
 import "./prototype-bar.css";
 
-// Who gets the toolbar:
-//   • while PROTOTYPING (localhost / a LAN dev server) — always, no flag needed;
-//   • anywhere else — only for a URL carrying `?<toolbarKey>-toolbar-active`,
-//     where the key is minted per prototype and passed in by the host.
-// There is deliberately no "off" switch: a URL without the flag IS the version
-// without the toolbar, so a second way to say the same thing would only be
-// another thing to remember.
+// Who gets the toolbar: the link decides, everywhere. A host that minted a
+// key shows the bar only for a URL carrying `?<toolbarKey>-toolbar-active` —
+// localhost included, so what you see is what the URL says. A host without a
+// key still gets it on dev hosts. There is deliberately no "off" switch: a
+// URL without the flag IS the version without the toolbar.
 const flagOf = (key) => `${key}-toolbar-active`;
 const barActive = (key) => {
   try {
-    return isDevHost() || (!!key && new URLSearchParams(window.location.search).has(flagOf(key)));
+    return key ? new URLSearchParams(window.location.search).has(flagOf(key)) : isDevHost();
   } catch (_) { return false; }
 };
 // The current step WITHOUT the toolbar flag: what you hand to a tester.

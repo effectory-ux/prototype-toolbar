@@ -34,8 +34,11 @@
     return h === "localhost" || h === "127.0.0.1" || /\.local$/.test(h) ||
       /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
   }
+  /* The link decides, everywhere: a host that minted a key shows the bar only
+     for a URL carrying the flag — localhost included, so what you see is what
+     the URL says. A host without a key (no config) still gets it on dev hosts. */
   function barActive() {
-    try { return isDevHost() || (!!KEY && new URLSearchParams(location.search).has(FLAG)); }
+    try { return KEY ? new URLSearchParams(location.search).has(FLAG) : isDevHost(); }
     catch (e) { return false; }
   }
 
@@ -60,11 +63,11 @@
     } catch (e) { return href || location.href; }
   }
   /* A target URL with the flag carried along when this page has it, so the
-     bar never vanishes mid-walkthrough. On a dev host nothing is needed. */
+     bar never vanishes mid-walkthrough. */
   function carry(href) {
     try {
       var u = new URL(href, location.href);
-      if (!isDevHost() && KEY && new URLSearchParams(location.search).has(FLAG) && u.origin === location.origin) {
+      if (KEY && new URLSearchParams(location.search).has(FLAG) && u.origin === location.origin) {
         u.searchParams.set(FLAG, "");
         return u.toString().replace(FLAG + "=", FLAG);
       }
@@ -112,6 +115,8 @@
   var api = {
     active: barActive(),
     isDevHost: isDevHost,
+    /* a host's own programmatic navigation keeps the bar: location.href = ProtoToolbar.carry(url) */
+    carry: function (href) { return carry(resolve(href)); },
     /* edge case on/off (persisted; `on` in the config is the default) */
     edge: function (key) { var d = byKey(C.edgeCases, key); var v = store.get("edge." + key, null); return v === null ? !!(d && d.on) : v === "1"; },
     /* design variant on/off (persisted unless the variant is URL-based) */
@@ -132,6 +137,18 @@
     carry: carry,
     version: VERSION
   };
+  /* The host's own same-origin links carry the flag too (capture phase, before
+     any router reads the href), so a walkthrough never loses the bar. */
+  if (api.active && KEY) {
+    document.addEventListener("click", function (e) {
+      var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+      if (!a || a.closest(".pbar") || (a.target && a.target !== "_self")) return;
+      var raw = a.getAttribute("href") || "";
+      if (!raw || raw.charAt(0) === "#" || /^(javascript|mailto|tel):/i.test(raw)) return;
+      var to = carry(raw);
+      if (to !== a.href) a.href = to;
+    }, true);
+  }
   window.ProtoToolbar = api;
 
   if (!barActive()) return; /* render nothing at all */
@@ -147,14 +164,16 @@
   document.addEventListener("DOMContentLoaded", function () {
     var seen = api.seen(); if (seen[location.pathname]) { seen[location.pathname].title = document.title || seen[location.pathname].title; store.set("seen", JSON.stringify(seen)); }
   });
+  /* Pages seen in this browser that no Screens entry points to (the page you
+     are on is left out: it will show once you have moved on). */
   function unregisteredPages() {
-    var out = [];
-    Object.keys(api.seen()).forEach(function (p) {
-      var listed = screens.some(function (s) { try { return new URL(resolve(s.href), location.href).pathname === p; } catch (e) { return false; } });
-      if (!listed && p !== location.pathname) out.push(api.seen()[p]);
-      else if (!listed && !screens.length) out.push(api.seen()[p]);
-    });
-    return out.sort(function (a, b) { return (b.lastSeen || "").localeCompare(a.lastSeen || ""); });
+    var seen = api.seen();
+    var listed = {};
+    screens.forEach(function (s) { try { listed[new URL(resolve(s.href), location.href).pathname] = true; } catch (e) {} });
+    return Object.keys(seen)
+      .filter(function (p) { return !listed[p] && p !== location.pathname; })
+      .map(function (p) { return seen[p]; })
+      .sort(function (a, b) { return (b.lastSeen || "").localeCompare(a.lastSeen || ""); });
   }
 
   /* ---- icons: the same glyphs as icons.jsx, inlined ------------------------ */
@@ -424,13 +443,14 @@
       return;
     }
     var offCount = edges.filter(function (e) { return api.edge(e.key) !== !!e.on; }).length;
+    var extraPages = unregisteredPages();
     bar = el(
       '<div class="pbar">' +
       (version && versions.length > 1
         ? '<div class="pbar-menu-wrap" data-menu="version"><button class="pbar-badge pbar-badge-btn" data-tip="Switch version">' + esc(badge) +
           '<span class="pbar-chev">' + ic("chevron-down", 12) + "</span></button><div class=\"pbar-menu-slot\"></div></div>"
         : '<span class="pbar-badge">' + esc(badge) + "</span>") +
-      (screens.length || unregisteredPages().length ? menuButton("screens", "clipboard-note", "Screens", isDevHost() ? unregisteredPages().length : 0) : "") +
+      (screens.length || extraPages.length ? menuButton("screens", "clipboard-note", "Screens", isDevHost() ? extraPages.length : 0) : "") +
       (edges.length ? menuButton("edges", "randomize", "Edge cases", offCount) : "") +
       (variants.length ? menuButton("variants", "sliders", "Variants") : "") +
       (screens.length ? "" : menuButton("start", "home", "Start")) + /* with screens, Start is a column in that menu */
