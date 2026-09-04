@@ -208,7 +208,8 @@ window.PROTO_TOOLBAR = {
   live: "https://effectory-ux.github.io/gtma/",   // powers the Share menu
   versions: [{ key, label, desc, match: /-before-/, go: u => "…-before-….html" }],
   screens:  [{ key, label, desc, href: u => "….html", group: "Results dashboard" }],
-  edgeCases:[{ key, label, desc, on: false }],       // persisted; toggling reloads
+  situations:[{ key, label, desc, on: false }],      // "Use cases" menu: persisted toggles, like edge cases
+  edgeCases:[{ key, label, desc, on: false }],       // listed under "Edge cases" in that same menu
   variants: [{ key, label, desc, on: u => bool, href: (on, u) => "….html" }], // or persisted like edges
   startPoints: [{ key, label }],
   shell: true,                     // false: plain block above the page instead of a body column
@@ -295,12 +296,16 @@ dev server (the `protoEdits` vite plugin, no extra wiring), so it is committed
 with the prototype and the deployed bar shows it too. Elsewhere it stays in the
 browser. The static flavor does the same per page (`ProtoToolbar.seen()`).
 
-**Start on any screen.** The Start menu always offers "Start on the screen
-I'm on": the exact route is remembered per prototype (origin + path) in the
-browser and applied before the app reads its first hash, so nothing has to be
-registered to make a screen the start. Picking a registered start point turns
-it off again. Static prototypes get `ProtoToolbar.startPath()` for their index
-page to honour.
+**Start is a column of the Screens menu.** Every row in Screens — registered
+screens, learned ones, legacy start points — has a radio in a **Start** column:
+one at a time, the top row ("Default start") resets to the prototype's own
+first page. The chosen start is remembered per prototype in the browser (path
+plus query, so a dialog deep link like `?open=review` can be a start) and
+applied before the app reads its first hash; static prototypes read it with
+`ProtoToolbar.startPath()` in their index page. A separate Start menu only
+appears for hosts without a Screens list. Dialogs and sub-pages count as
+screens: register them with a deep-link `href` and a `match` that checks the
+query, and let the page open the dialog when it sees the parameter.
 
 **The rule for agents building a prototype:** the toolbar learns *screens* by
 itself, but *edge cases, variants and start points* only exist in the

@@ -98,7 +98,8 @@ export function PrototypeBar(props) {
   const storagePrefix = props.storagePrefix ?? c.storagePrefix ?? c.PROTO_STORAGE_PREFIX ?? "proto";
   const toolbarKey = props.toolbarKey ?? c.toolbarKey ?? c.PROTO_TOOLBAR_KEY ?? "";
   const versions = props.versions ?? c.versions ?? c.VERSIONS ?? [];
-  const { edges = {}, varState = {}, onUseCase = () => {}, onToggleEdge = () => {}, onToggleVariant = () => {} } = props;
+  const { edges = {}, varState = {}, sits = {}, onUseCase = () => {}, onToggleEdge = () => {}, onToggleVariant = () => {}, onToggleSituation = () => {} } = props;
+  const situations = props.situations ?? c.situations ?? c.SITUATIONS ?? [];
   const version = currentVersion(versions);
   // Discovery: one instance per bar, booted once; re-render when it learns.
   const discRef = useRef(null);
@@ -233,7 +234,11 @@ export function PrototypeBar(props) {
 
   const pick = (key) => { setMenu(null); disc.note(key); onUseCase(key); };
   const pickStart = (key) => { setStart(key); setStartAt(storagePrefix, key); setStartRoute(null); setStartRouteState(null); setMenu(null); };
-  const offCount = edgeCases.filter(e => edges[e.key] !== e.on).length;
+  /* Start column in the Screens menu: one radio at a time; the top row resets */
+  const startOn = (key) => { setStart(key); setStartAt(storagePrefix, key); setStartRoute(null); setStartRouteState(null); };
+  const startOnRoute = (route) => { setStartRoute(route); setStartRouteState(route); };
+  const resetStart = () => { setStart(null); setStartAt(storagePrefix, ""); setStartRoute(null); setStartRouteState(null); };
+  const offCount = edgeCases.filter(e => edges[e.key] !== e.on).length + situations.filter(s => sits[s.key] !== s.on).length;
 
   if (!barActive(toolbarKey)) return null;
 
@@ -314,22 +319,35 @@ export function PrototypeBar(props) {
             <>
               <div className="pbar-scrim" onMouseDown={() => setMenu(null)} />
               <div className="pbar-menu">
-                <div className="pbar-menu-head">Jump to a screen</div>
+                <div className="pbar-menu-head pbar-cols"><span>Jump to a screen</span><span className="pbar-col-start" title="Where the prototype opens">Start</span></div>
+                <div className="pbar-item pbar-row">
+                  <span className="pbar-row-main"><span className="pbar-item-label">Default start</span><span className="pbar-item-desc">The prototype's own first screen.</span></span>
+                  <button className={"pbar-radio" + (!startRoute && !start ? " is-on" : "")} role="radio" aria-checked={!startRoute && !start}
+                    aria-label="Start here" title="Open the prototype at its default start" onClick={resetStart} />
+                </div>
                 {useCases.map(c => (
-                  <button key={c.key} className="pbar-item" onClick={() => pick(c.key)}>
-                    <span className="pbar-item-label">{c.label}</span>
-                    <span className="pbar-item-desc">{c.desc}</span>
-                  </button>
+                  <div key={c.key} className="pbar-item pbar-row">
+                    <button className="pbar-row-main" onClick={() => pick(c.key)}>
+                      <span className="pbar-item-label">{c.label}</span>
+                      <span className="pbar-item-desc">{c.desc}</span>
+                    </button>
+                    <button className={"pbar-radio" + (start === c.key && !startRoute ? " is-on" : "")} role="radio" aria-checked={start === c.key && !startRoute}
+                      aria-label="Start here" title={start === c.key && !startRoute ? "The prototype opens here" : "Open the prototype here"} onClick={() => startOn(c.key)} />
+                  </div>
                 ))}
                 {unregistered.length > 0 && (
                   <>
                     <div className="pbar-menu-head pbar-menu-sub">Seen here, not in this list</div>
                     <div className="pbar-menu-note">Screens this prototype has shown that no entry above leads to. Register them in proto-config.js, or jump there (as far as the prototype's deep links allow).</div>
                     {unregistered.map(e => (
-                      <a key={e.route} className="pbar-item" href={e.example} onClick={() => setMenu(null)}>
-                        <span className="pbar-item-label">{e.label}</span>
-                        <span className="pbar-item-desc pbar-mono">{e.route}</span>
-                      </a>
+                      <div key={e.route} className="pbar-item pbar-row">
+                        <a className="pbar-row-main" href={e.example} onClick={() => setMenu(null)}>
+                          <span className="pbar-item-label">{e.label}</span>
+                          <span className="pbar-item-desc pbar-mono">{e.route}</span>
+                        </a>
+                        <button className={"pbar-radio" + (startRoute === e.route ? " is-on" : "")} role="radio" aria-checked={startRoute === e.route}
+                          aria-label="Start here" title="Open the prototype on this screen" onClick={() => startOnRoute(e.route)} />
+                      </div>
                     ))}
                   </>
                 )}
@@ -339,19 +357,28 @@ export function PrototypeBar(props) {
         </div>
       )}
 
-      {edgeCases.length > 0 && (
+      {(edgeCases.length > 0 || situations.length > 0) && (
         <div className="pbar-menu-wrap">
-          <button className={"pbar-btn" + (menu === "edges" ? " is-open" : "")} data-tip="Edge cases"
+          <button className={"pbar-btn" + (menu === "edges" ? " is-open" : "")} data-tip="Use cases"
             onClick={() => setMenu(m => (m === "edges" ? null : "edges"))}>
-            <Ic name="randomize" size={14} /><span className="pbar-lbl">Edge cases</span>
+            <Ic name="randomize" size={14} /><span className="pbar-lbl">Use cases</span>
             {offCount > 0 && <span className="pbar-count">{offCount}</span>}
           </button>
           {menu === "edges" && (
             <>
               <div className="pbar-scrim" onMouseDown={() => setMenu(null)} />
               <div className="pbar-menu">
-                <div className="pbar-menu-head">Not every account is the same</div>
-                <div className="pbar-menu-note">Flip these to show a screen both ways. They apply to the survey you have open.</div>
+                <div className="pbar-menu-head">Use cases</div>
+                <div className="pbar-menu-note">Show the same screens for another situation. They apply to the survey you have open.</div>
+                {situations.map(c => (
+                  <button key={c.key} className={"pbar-item" + (sits[c.key] ? " is-on" : "")}
+                    role="switch" aria-checked={!!sits[c.key]} onClick={() => onToggleSituation(c.key)}>
+                    <span className="pbar-item-label">{c.label}</span>
+                    <span className="pbar-switch" aria-hidden="true" />
+                    <span className="pbar-item-desc">{c.desc}</span>
+                  </button>
+                ))}
+                {edgeCases.length > 0 && <div className="pbar-menu-head pbar-menu-sub">Edge cases</div>}
                 {edgeCases.map(c => (
                   <button key={c.key} className={"pbar-item" + (edges[c.key] ? " is-on" : "")}
                     role="switch" aria-checked={!!edges[c.key]} onClick={() => onToggleEdge(c.key)}>
@@ -392,6 +419,7 @@ export function PrototypeBar(props) {
         </div>
       )}
 
+      {useCases.length === 0 && (
       <div className="pbar-menu-wrap">
           <button className={"pbar-btn" + (menu === "start" ? " is-open" : "")} data-tip="Start"
             onClick={() => setMenu(m => (m === "start" ? null : "start"))}>
@@ -420,6 +448,7 @@ export function PrototypeBar(props) {
             </>
           )}
         </div>
+      )}
 
       <span className="pbar-spacer" aria-hidden="true" />
 

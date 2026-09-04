@@ -114,6 +114,7 @@
     isDevHost: isDevHost,
     /* edge case on/off (persisted; `on` in the config is the default) */
     edge: function (key) { var d = byKey(C.edgeCases, key); var v = store.get("edge." + key, null); return v === null ? !!(d && d.on) : v === "1"; },
+    situation: function (key) { var d = byKey(C.situations, key); var v = store.get("situation." + key, null); return v === null ? !!(d && d.on) : v === "1"; },
     /* design variant on/off (persisted unless the variant is URL-based) */
     variant: function (key) {
       var d = byKey(C.variants, key);
@@ -193,6 +194,7 @@
   var edges = C.edgeCases || [];
   var variants = C.variants || [];
   var starts = C.startPoints || [];
+  var situations = C.situations || []; /* use cases that aren't edge cases; same toggle model */
   var hidden = store.get("barHidden", "0") === "1";
   var openMenu = null;
   var bar = null, peek = null;
@@ -237,6 +239,20 @@
       '<span class="pbar-item-label">' + esc(label) + "</span>" +
       (desc ? '<span class="pbar-item-desc">' + esc(desc) + "</span>" : "") + "</a>";
   }
+  /* a Screens row: the screen to jump to, plus a radio in the Start column */
+  function screenRow(href, label, desc, cur, startOn, startAttrs) {
+    var inner = '<span class="pbar-item-label">' + esc(label) + "</span>" + (cur ? ic("check") : "") +
+      (desc ? '<span class="pbar-item-desc">' + esc(desc) + "</span>" : "");
+    var main = !href ? '<span class="pbar-row-main">' + inner + "</span>"
+      : cur ? '<span class="pbar-row-main is-current">' + inner + "</span>"
+      : '<a class="pbar-row-main" href="' + esc(carry(href)) + '">' + inner + "</a>";
+    return '<div class="pbar-item pbar-row' + (cur ? " is-on" : "") + '">' + main +
+      '<button class="pbar-radio' + (startOn ? " is-on" : "") + '" role="radio" aria-checked="' + startOn + '" ' + startAttrs +
+      ' aria-label="Start here" title="' + (startOn ? "The prototype opens here" : "Open the prototype here") + '"></button></div>';
+  }
+  /* where the current page lives, without the toolbar flag: what a start remembers */
+  function herePath() { try { var u = new URL(api.plainLink()); return u.pathname + u.search; } catch (e) { return location.pathname; } }
+  function pathOf(href) { try { var u = new URL(href, location.href); return u.pathname + u.search; } catch (e) { return String(href); } }
   function toggle(on, attrs, label, desc) {
     return '<button class="pbar-item' + (on ? " is-on" : "") + '" role="switch" aria-checked="' + on + '" ' + attrs + ">" +
       '<span class="pbar-item-label">' + esc(label) + '</span><span class="pbar-switch" aria-hidden="true"></span>' +
@@ -266,40 +282,63 @@
       }
     },
     screens: {
+      /* every screen, with a Start column: the radio marks where the prototype
+         opens (one at a time; the top row resets to the prototype's own start) */
       html: function () {
-        var out = '<div class="pbar-menu-head">Jump to a screen</div>', group = null;
+        var sp = api.startPath(), sk = store.get("startAt", "");
+        var out = '<div class="pbar-menu-head pbar-cols"><span>Jump to a screen</span><span class="pbar-col-start" title="Where the prototype opens">Start</span></div>';
+        out += screenRow(null, "Default start", "The prototype's own first page.", false, !sp && !sk, "data-start-default");
+        var group = null;
         screens.forEach(function (s) {
           if (s.group && s.group !== group) { group = s.group; out += '<div class="pbar-menu-head pbar-menu-sub">' + esc(group) + "</div>"; }
-          var href = resolve(s.href);
+          var href = resolve(s.href), p = pathOf(href);
           var cur = s.match !== undefined ? matches(s.match) : samePage(href);
-          out += link("", href, s.label, s.desc, cur);
+          out += screenRow(href, s.label, s.desc, cur, sp === p, 'data-start-path="' + esc(p) + '"');
         });
+        if (starts.length) {
+          out += '<div class="pbar-menu-head pbar-menu-sub">Start points</div>';
+          starts.forEach(function (s) { out += screenRow(null, s.label, s.desc, false, !sp && sk === s.key, 'data-start-key="' + esc(s.key) + '"'); });
+        }
         var extra = unregisteredPages();
         if (extra.length) {
           out += '<div class="pbar-menu-head pbar-menu-sub">Seen here, not in this list</div>' +
             '<div class="pbar-menu-note">Pages this prototype has shown that no entry above points to. Register them in the config, or jump there.</div>';
-          extra.forEach(function (e) {
-            out += '<a class="pbar-item" href="' + esc(carry(e.path)) + '"><span class="pbar-item-label">' + esc(e.title || e.path) + '</span><span class="pbar-item-desc pbar-mono">' + esc(e.path) + "</span></a>";
-          });
+          extra.forEach(function (e) { out += screenRow(e.path, e.title || e.path, e.path, false, sp === e.path, 'data-start-path="' + esc(e.path) + '"'); });
         }
         return out;
       },
-      bind: function () {}
+      bind: function (slot, close, reopen) {
+        function setStart(path, key) { store.set("startPath", path || ""); store.set("startAt", key || ""); reopen(); }
+        slot.querySelectorAll("[data-start-default]").forEach(function (b) { b.addEventListener("click", function () { setStart("", ""); }); });
+        slot.querySelectorAll("[data-start-path]").forEach(function (b) { b.addEventListener("click", function () { setStart(b.getAttribute("data-start-path"), ""); }); });
+        slot.querySelectorAll("[data-start-key]").forEach(function (b) { b.addEventListener("click", function () { setStart("", b.getAttribute("data-start-key")); }); });
+      }
     },
     edges: {
+      /* "Use cases": situations to show the same screens in, with the edge
+         cases among them under their own sub-header */
       html: function () {
-        return '<div class="pbar-menu-head">Not every account is the same</div>' +
-          '<div class="pbar-menu-note">Flip these to show a screen both ways. They reload the page.</div>' +
-          edges.map(function (e) { return toggle(api.edge(e.key), 'data-edge="' + esc(e.key) + '"', e.label, e.desc); }).join("");
+        var out = '<div class="pbar-menu-head">Use cases</div>' +
+          '<div class="pbar-menu-note">Show the same screens for another situation. Switching reloads the page.</div>' +
+          situations.map(function (s) { return toggle(api.situation(s.key), 'data-situation="' + esc(s.key) + '"', s.label, s.desc); }).join("");
+        if (edges.length) {
+          out += '<div class="pbar-menu-head pbar-menu-sub">Edge cases</div>' +
+            edges.map(function (e) { return toggle(api.edge(e.key), 'data-edge="' + esc(e.key) + '"', e.label, e.desc); }).join("");
+        }
+        return out;
       },
       bind: function (slot) {
-        slot.querySelectorAll("[data-edge]").forEach(function (b) {
-          b.addEventListener("click", function () {
-            var k = b.getAttribute("data-edge"), e = byKey(edges, k), on = !api.edge(k);
-            store.set("edge." + k, on ? "1" : "0");
-            if (typeof e.apply === "function") { e.apply(on); render(); } else location.reload();
-          });
-        });
+        function flip(list, prefix, read) {
+          return function (b) {
+            b.addEventListener("click", function () {
+              var k = b.getAttribute("data-" + prefix), d = byKey(list, k), on = !read(k);
+              store.set(prefix + "." + k, on ? "1" : "0");
+              if (d && typeof d.apply === "function") { d.apply(on); render(); } else location.reload();
+            });
+          };
+        }
+        slot.querySelectorAll("[data-edge]").forEach(flip(edges, "edge", api.edge));
+        slot.querySelectorAll("[data-situation]").forEach(flip(situations, "situation", api.situation));
       }
     },
     variants: {
@@ -333,7 +372,7 @@
           b.addEventListener("click", function () { store.set("startAt", b.getAttribute("data-start")); store.set("startPath", ""); close(); });
         });
         slot.querySelector("[data-start-here]").addEventListener("click", function () {
-          store.set("startPath", api.startPath() ? "" : location.pathname); close();
+          store.set("startPath", api.startPath() ? "" : herePath()); close();
         });
       }
     },
@@ -389,7 +428,8 @@
       publishHeight();
       return;
     }
-    var offCount = edges.filter(function (e) { return api.edge(e.key) !== !!e.on; }).length;
+    var offCount = edges.filter(function (e) { return api.edge(e.key) !== !!e.on; }).length +
+      situations.filter(function (s) { return api.situation(s.key) !== !!s.on; }).length;
     bar = el(
       '<div class="pbar">' +
       (version && versions.length > 1
@@ -397,9 +437,9 @@
           '<span class="pbar-chev">' + ic("chevron-down", 12) + "</span></button><div class=\"pbar-menu-slot\"></div></div>"
         : '<span class="pbar-badge">' + esc(badge) + "</span>") +
       (screens.length || unregisteredPages().length ? menuButton("screens", "shapes", "Screens", isDevHost() ? unregisteredPages().length : 0) : "") +
-      (edges.length ? menuButton("edges", "randomize", "Edge cases", offCount) : "") +
+      ((situations.length || edges.length) ? menuButton("edges", "randomize", "Use cases", offCount) : "") +
       (variants.length ? menuButton("variants", "sliders", "Variants") : "") +
-      menuButton("start", "home", "Start") +
+      (screens.length ? "" : menuButton("start", "home", "Start")) + /* with screens, Start is a column in that menu */
       '<span class="pbar-spacer" aria-hidden="true"></span>' +
       (updateTo
         ? '<a class="pbar-update pbar-tt is-right" href="https://github.com/effectory-ux/prototype-toolbar/releases" target="_blank" rel="noopener" ' +

@@ -91,6 +91,22 @@ a.pbar-item { text-decoration: none; }
   border-radius: 50%; background: #9aa3b2; transition: transform .15s ease, background .15s ease; }
 .pbar-item.is-on .pbar-switch { background: #1f6f66; }
 .pbar-item.is-on .pbar-switch::after { transform: translateX(12px); background: #7ad3c8; }
+/* Screens menu: a row is the screen (link) plus a radio in the Start column. */
+.pbar-cols { display: flex; justify-content: space-between; align-items: baseline; }
+.pbar-col-start { font-size: 10px; letter-spacing: .06em; color: #6b7280; }
+.pbar-item.pbar-row { flex-wrap: nowrap; align-items: center; gap: 6px; padding: 0 9px 0 0; }
+.pbar-item.pbar-row:hover { background: transparent; }
+.pbar-row-main { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 7px 9px;
+  border-radius: 7px; color: inherit; text-decoration: none; background: transparent; border: none; font: inherit; text-align: left; cursor: pointer; }
+a.pbar-row-main:hover, button.pbar-row-main:hover { background: #2a2f39; }
+.pbar-row-main.is-current, span.pbar-row-main { cursor: default; }
+.pbar-row-main i { display: flex; margin-left: auto; color: #7ad3c8; }
+.pbar-radio { flex: none; width: 16px; height: 16px; padding: 0; border-radius: 50%; border: 1.5px solid #6b7280; background: transparent;
+  cursor: pointer; position: relative; }
+.pbar-radio:hover { border-color: #9aa3b2; }
+.pbar-radio.is-on { border-color: #7ad3c8; }
+.pbar-radio.is-on::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: #7ad3c8; }
+
 /* Reveal tab — the way back when the bar is collapsed: a vertical button on
    the middle of the right screen edge, out of every layout's way. */
 .pbar-peek { position: fixed; top: 50%; right: 0; transform: translateY(-50%); z-index: 10000;
