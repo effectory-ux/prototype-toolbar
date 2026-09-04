@@ -145,7 +145,9 @@
       if (!a || a.closest(".pbar") || (a.target && a.target !== "_self")) return;
       var raw = a.getAttribute("href") || "";
       if (!raw || raw.charAt(0) === "#" || /^(javascript|mailto|tel):/i.test(raw)) return;
-      var to = carry(raw);
+      /* a.href is already resolved against the document's <base>; the raw
+         attribute would resolve against the page's own URL and miss */
+      var to = carry(a.href);
       if (to !== a.href) a.href = to;
     }, true);
   }
