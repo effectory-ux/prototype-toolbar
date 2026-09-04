@@ -98,8 +98,7 @@ export function PrototypeBar(props) {
   const storagePrefix = props.storagePrefix ?? c.storagePrefix ?? c.PROTO_STORAGE_PREFIX ?? "proto";
   const toolbarKey = props.toolbarKey ?? c.toolbarKey ?? c.PROTO_TOOLBAR_KEY ?? "";
   const versions = props.versions ?? c.versions ?? c.VERSIONS ?? [];
-  const { edges = {}, varState = {}, sits = {}, onUseCase = () => {}, onToggleEdge = () => {}, onToggleVariant = () => {}, onToggleSituation = () => {} } = props;
-  const situations = props.situations ?? c.situations ?? c.SITUATIONS ?? [];
+  const { edges = {}, varState = {}, onUseCase = () => {}, onToggleEdge = () => {}, onToggleVariant = () => {} } = props;
   const version = currentVersion(versions);
   // Discovery: one instance per bar, booted once; re-render when it learns.
   const discRef = useRef(null);
@@ -238,7 +237,7 @@ export function PrototypeBar(props) {
   const startOn = (key) => { setStart(key); setStartAt(storagePrefix, key); setStartRoute(null); setStartRouteState(null); };
   const startOnRoute = (route) => { setStartRoute(route); setStartRouteState(route); };
   const resetStart = () => { setStart(null); setStartAt(storagePrefix, ""); setStartRoute(null); setStartRouteState(null); };
-  const offCount = edgeCases.filter(e => edges[e.key] !== e.on).length + situations.filter(s => sits[s.key] !== s.on).length;
+  const offCount = edgeCases.filter(e => edges[e.key] !== e.on).length;
 
   if (!barActive(toolbarKey)) return null;
 
@@ -312,29 +311,33 @@ export function PrototypeBar(props) {
         <div className="pbar-menu-wrap">
           <button className={"pbar-btn" + (menu === "cases" ? " is-open" : "")} data-tip="Screens"
             onClick={() => setMenu(m => (m === "cases" ? null : "cases"))}>
-            <Ic name="shapes" size={14} /><span className="pbar-lbl">Screens</span>
+            <Ic name="clipboard-note" size={14} /><span className="pbar-lbl">Screens</span>
             {isDevHost() && unregistered.length > 0 && <span className="pbar-count is-learn" title="Seen here, not in the Screens list">{unregistered.length}</span>}
           </button>
           {menu === "cases" && (
             <>
               <div className="pbar-scrim" onMouseDown={() => setMenu(null)} />
               <div className="pbar-menu">
-                <div className="pbar-menu-head pbar-cols"><span>Jump to a screen</span><span className="pbar-col-start" title="Where the prototype opens">Start</span></div>
-                <div className="pbar-item pbar-row">
-                  <span className="pbar-row-main"><span className="pbar-item-label">Default start</span><span className="pbar-item-desc">The prototype's own first screen.</span></span>
-                  <button className={"pbar-radio" + (!startRoute && !start ? " is-on" : "")} role="radio" aria-checked={!startRoute && !start}
-                    aria-label="Start here" title="Open the prototype at its default start" onClick={resetStart} />
+                <div className="pbar-menu-head pbar-cols"><span>Screens</span>
+                  <button className={"pbar-reset" + (startRoute || start ? "" : " is-off")} disabled={!(startRoute || start)}
+                    title={startRoute || start ? "Back to the prototype's own first screen" : "The prototype opens on its own first screen"} onClick={resetStart}>Reset start</button>
                 </div>
-                {useCases.map(c => (
-                  <div key={c.key} className="pbar-item pbar-row">
-                    <button className="pbar-row-main" onClick={() => pick(c.key)}>
-                      <span className="pbar-item-label">{c.label}</span>
-                      <span className="pbar-item-desc">{c.desc}</span>
-                    </button>
-                    <button className={"pbar-radio" + (start === c.key && !startRoute ? " is-on" : "")} role="radio" aria-checked={start === c.key && !startRoute}
-                      aria-label="Start here" title={start === c.key && !startRoute ? "The prototype opens here" : "Open the prototype here"} onClick={() => startOn(c.key)} />
-                  </div>
-                ))}
+                {useCases.map(c => {
+                  const on = start === c.key && !startRoute;
+                  return (
+                    <div key={c.key} className="pbar-item pbar-row">
+                      <button className="pbar-row-main" onClick={() => pick(c.key)}>
+                        <span className="pbar-item-label">{c.label}</span>
+                        <span className="pbar-item-desc">{c.desc}</span>
+                      </button>
+                      <span className="pbar-row-side">
+                        <button className={"pbar-start" + (on ? " is-on" : "")} role="switch" aria-checked={on} aria-label="Start here"
+                          title={on ? "The prototype opens here — switch off for the default start" : "Open the prototype here"}
+                          onClick={() => (on ? resetStart() : startOn(c.key))}><span className="pbar-switch" aria-hidden="true" /></button>
+                      </span>
+                    </div>
+                  );
+                })}
                 {unregistered.length > 0 && (
                   <>
                     <div className="pbar-menu-head pbar-menu-sub">Seen here, not in this list</div>
@@ -345,8 +348,11 @@ export function PrototypeBar(props) {
                           <span className="pbar-item-label">{e.label}</span>
                           <span className="pbar-item-desc pbar-mono">{e.route}</span>
                         </a>
-                        <button className={"pbar-radio" + (startRoute === e.route ? " is-on" : "")} role="radio" aria-checked={startRoute === e.route}
-                          aria-label="Start here" title="Open the prototype on this screen" onClick={() => startOnRoute(e.route)} />
+                        <span className="pbar-row-side">
+                          <button className={"pbar-start" + (startRoute === e.route ? " is-on" : "")} role="switch" aria-checked={startRoute === e.route} aria-label="Start here"
+                            title={startRoute === e.route ? "The prototype opens here — switch off for the default start" : "Open the prototype here"}
+                            onClick={() => (startRoute === e.route ? resetStart() : startOnRoute(e.route))}><span className="pbar-switch" aria-hidden="true" /></button>
+                        </span>
                       </div>
                     ))}
                   </>
@@ -357,28 +363,19 @@ export function PrototypeBar(props) {
         </div>
       )}
 
-      {(edgeCases.length > 0 || situations.length > 0) && (
+      {edgeCases.length > 0 && (
         <div className="pbar-menu-wrap">
-          <button className={"pbar-btn" + (menu === "edges" ? " is-open" : "")} data-tip="Use cases"
+          <button className={"pbar-btn" + (menu === "edges" ? " is-open" : "")} data-tip="Edge cases"
             onClick={() => setMenu(m => (m === "edges" ? null : "edges"))}>
-            <Ic name="randomize" size={14} /><span className="pbar-lbl">Use cases</span>
+            <Ic name="randomize" size={14} /><span className="pbar-lbl">Edge cases</span>
             {offCount > 0 && <span className="pbar-count">{offCount}</span>}
           </button>
           {menu === "edges" && (
             <>
               <div className="pbar-scrim" onMouseDown={() => setMenu(null)} />
               <div className="pbar-menu">
-                <div className="pbar-menu-head">Use cases</div>
-                <div className="pbar-menu-note">Show the same screens for another situation. They apply to the survey you have open.</div>
-                {situations.map(c => (
-                  <button key={c.key} className={"pbar-item" + (sits[c.key] ? " is-on" : "")}
-                    role="switch" aria-checked={!!sits[c.key]} onClick={() => onToggleSituation(c.key)}>
-                    <span className="pbar-item-label">{c.label}</span>
-                    <span className="pbar-switch" aria-hidden="true" />
-                    <span className="pbar-item-desc">{c.desc}</span>
-                  </button>
-                ))}
-                {edgeCases.length > 0 && <div className="pbar-menu-head pbar-menu-sub">Edge cases</div>}
+                <div className="pbar-menu-head">Not every account is the same</div>
+                <div className="pbar-menu-note">Flip these to show a screen both ways. They apply to the survey you have open.</div>
                 {edgeCases.map(c => (
                   <button key={c.key} className={"pbar-item" + (edges[c.key] ? " is-on" : "")}
                     role="switch" aria-checked={!!edges[c.key]} onClick={() => onToggleEdge(c.key)}>

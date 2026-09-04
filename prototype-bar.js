@@ -114,7 +114,6 @@
     isDevHost: isDevHost,
     /* edge case on/off (persisted; `on` in the config is the default) */
     edge: function (key) { var d = byKey(C.edgeCases, key); var v = store.get("edge." + key, null); return v === null ? !!(d && d.on) : v === "1"; },
-    situation: function (key) { var d = byKey(C.situations, key); var v = store.get("situation." + key, null); return v === null ? !!(d && d.on) : v === "1"; },
     /* design variant on/off (persisted unless the variant is URL-based) */
     variant: function (key) {
       var d = byKey(C.variants, key);
@@ -162,6 +161,7 @@
   var SVG = {
     sliders: '<path d="M18.5 3.33339C18.5 3.88567 18.0523 4.33339 17.5 4.33339L11.6667 4.33339C11.1144 4.33339 10.6667 3.88567 10.6667 3.33339C10.6667 2.7811 11.1144 2.33339 11.6667 2.33339L17.5 2.33339C18.0523 2.33339 18.5 2.7811 18.5 3.33339Z" fill="currentColor"/><path d="M1.49998 3.33339C1.49998 3.88567 1.94769 4.33339 2.49998 4.33339L7.33331 4.33339L7.33331 5.83339C7.33331 6.38567 7.78103 6.83339 8.33331 6.83339C8.8856 6.83339 9.33331 6.38567 9.33331 5.83339L9.33331 0.833389C9.33331 0.281104 8.8856 -0.166611 8.33331 -0.166611C7.78103 -0.166611 7.33331 0.281104 7.33331 0.833389L7.33331 2.33339L2.49998 2.33339C1.94769 2.33339 1.49998 2.7811 1.49998 3.33339Z" fill="currentColor"/><path d="M10 11C10.5523 11 11 10.5523 11 10C11 9.44773 10.5523 9.00001 10 9.00001L2.5 9.00001C1.94772 9.00001 1.5 9.44773 1.5 10C1.5 10.5523 1.94772 11 2.5 11L10 11Z" fill="currentColor"/><path d="M18.5 10C18.5 10.5523 18.0523 11 17.5 11L14.3333 11L14.3333 12.5C14.3333 13.0523 13.8856 13.5 13.3333 13.5C12.781 13.5 12.3333 13.0523 12.3333 12.5L12.3333 7.50001C12.3333 6.94773 12.781 6.50002 13.3333 6.50002C13.8856 6.50002 14.3333 6.94773 14.3333 7.50002L14.3333 9.00002L17.5 9.00002C18.0523 9.00002 18.5 9.44773 18.5 10Z" fill="currentColor"/><path d="M6.66669 13.1666C7.21897 13.1666 7.66669 13.6144 7.66669 14.1666L7.66669 19.1666C7.66669 19.7189 7.21897 20.1666 6.66669 20.1666C6.1144 20.1666 5.66669 19.7189 5.66669 19.1666L5.66669 17.6666L2.50002 17.6666C1.94774 17.6666 1.50002 17.2189 1.50002 16.6666C1.50002 16.1144 1.94774 15.6666 2.50002 15.6666L5.66669 15.6666L5.66669 14.1666C5.66669 13.6144 6.1144 13.1666 6.66669 13.1666Z" fill="currentColor"/><path d="M18.5 16.6666C18.5 17.2189 18.0523 17.6666 17.5 17.6666L10 17.6666C9.44771 17.6666 9 17.2189 9 16.6666C9 16.1144 9.44772 15.6666 10 15.6666L17.5 15.6666C18.0523 15.6666 18.5 16.1144 18.5 16.6666Z" fill="currentColor"/>',
     shapes: '<path fill-rule="evenodd" clip-rule="evenodd" d="M13.8069 9C14.7425 9 15.3129 7.90689 14.817 7.06417L11.0102 0.594671C10.5436 -0.198223 9.45641 -0.198224 8.98984 0.594669L5.18297 7.06417C4.68709 7.90688 5.2575 9 6.19313 9H13.8069ZM12.4587 7L10 2.82161L7.54129 7H12.4587Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M4.5 20C6.98528 20 9 17.9853 9 15.5C9 13.0147 6.98528 11 4.5 11C2.01472 11 0 13.0147 0 15.5C0 17.9853 2.01472 20 4.5 20ZM4.5 18C5.88071 18 7 16.8807 7 15.5C7 14.1193 5.88071 13 4.5 13C3.11929 13 2 14.1193 2 15.5C2 16.8807 3.11929 18 4.5 18Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M12.125 11C11.5037 11 11 11.5037 11 12.125V18.875C11 19.4963 11.5037 20 12.125 20H18.875C19.4963 20 20 19.4963 20 18.875V12.125C20 11.5037 19.4963 11 18.875 11H12.125ZM18 18H13V13H18V18Z" fill="currentColor"/>',
+    "clipboard-note": '<path d="M7 9C6.44772 9 6 9.44771 6 10C6 10.5523 6.44772 11 7 11H13C13.5523 11 14 10.5523 14 10C14 9.44771 13.5523 9 13 9H7Z" fill="currentColor"/><path d="M6 14C6 13.4477 6.44772 13 7 13H10C10.5523 13 11 13.4477 11 14C11 14.5523 10.5523 15 10 15H7C6.44772 15 6 14.5523 6 14Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M5 2C5 0.89543 5.89543 0 7 0H13C14.1046 0 15 0.895431 15 2H15.25C16.7688 2 18 3.23122 18 4.75V17.25C18 18.7688 16.7688 20 15.25 20H4.75C3.23122 20 2 18.7688 2 17.25V4.75C2 3.23122 3.23122 2 4.75 2L5 2ZM7 2V4H13V2H7ZM15 4C15 5.10457 14.1046 6 13 6H7C5.89543 6 5 5.10457 5 4H4.75C4.33579 4 4 4.33579 4 4.75V17.25C4 17.6642 4.33579 18 4.75 18H15.25C15.6642 18 16 17.6642 16 17.25V4.75C16 4.33579 15.6642 4 15.25 4H15Z" fill="currentColor"/>',
     "chevron-down": '<path fill-rule="evenodd" clip-rule="evenodd" d="M3.29289 6.29287C3.68342 5.90235 4.31658 5.90235 4.70711 6.29287L10 11.5858L15.2929 6.29287C15.6834 5.90235 16.3166 5.90235 16.7071 6.29287C17.0976 6.6834 17.0976 7.31656 16.7071 7.70709L10.7778 13.6364C10.3482 14.066 9.65176 14.0659 9.22218 13.6364L3.29289 7.70709C2.90237 7.31656 2.90237 6.6834 3.29289 6.29287Z" fill="currentColor"/>',
     randomize: '<path d="M14.8737 1.12621C14.4832 0.735682 13.85 0.735682 13.4595 1.12621C13.069 1.51673 13.069 2.1499 13.4595 2.54042L15.0858 4.16666H5.83333C4.68406 4.16666 3.58186 4.6232 2.7692 5.43586C1.95655 6.24852 1.5 7.35072 1.5 8.49999V10.1667C1.5 10.7189 1.94772 11.1667 2.5 11.1667C3.05228 11.1667 3.5 10.7189 3.5 10.1667V8.49999C3.5 7.88115 3.74583 7.28766 4.18342 6.85007C4.621 6.41249 5.21449 6.16666 5.83333 6.16666H15.0857L13.4595 7.79287C13.069 8.1834 13.069 8.81656 13.4595 9.20709C13.85 9.59761 14.4832 9.59761 14.8737 9.20709L18.201 5.87977C18.2244 5.85678 18.2467 5.83266 18.2677 5.80748C18.3219 5.74277 18.3665 5.67284 18.4017 5.59949C18.4647 5.46852 18.5 5.32171 18.5 5.16666C18.5 5.01593 18.4667 4.873 18.4069 4.74483C18.3681 4.66121 18.317 4.58185 18.2537 4.50944C18.2373 4.49063 18.2202 4.47243 18.2024 4.45489L14.8737 1.12621Z" fill="currentColor"/><path d="M6.54044 10.7929C6.93096 11.1834 6.93096 11.8166 6.54044 12.2071L4.91422 13.8333H14.1667C14.7855 13.8333 15.379 13.5875 15.8166 13.1499C16.2542 12.7123 16.5 12.1188 16.5 11.5V9.83331C16.5 9.28103 16.9477 8.83331 17.5 8.83331C18.0523 8.83331 18.5 9.28103 18.5 9.83331V11.5C18.5 12.6493 18.0435 13.7515 17.2308 14.5641C16.4181 15.3768 15.3159 15.8333 14.1667 15.8333H4.91421L6.54044 17.4595C6.93096 17.8501 6.93096 18.4832 6.54044 18.8738C6.14992 19.2643 5.51675 19.2643 5.12623 18.8738L1.79289 15.5404C1.59763 15.3452 1.5 15.0892 1.5 14.8333C1.5 14.6966 1.52742 14.5664 1.57705 14.4477C1.6232 14.3371 1.6901 14.2331 1.77773 14.1417L1.79474 14.1244L5.12623 10.7929C5.51675 10.4024 6.14992 10.4024 6.54044 10.7929Z" fill="currentColor"/>',
     home: '<path fill-rule="evenodd" clip-rule="evenodd" d="M10.6139 0.877396C10.2528 0.596532 9.74717 0.596532 9.38606 0.877396L1.88606 6.71073C1.64247 6.90019 1.5 7.19149 1.5 7.50008V16.6667C1.5 17.374 1.78095 18.0523 2.28105 18.5524C2.78115 19.0525 3.45942 19.3334 4.16667 19.3334H15.8333C16.5406 19.3334 17.2189 19.0525 17.719 18.5524C18.219 18.0523 18.5 17.374 18.5 16.6667V7.50008C18.5 7.19149 18.3575 6.90019 18.1139 6.71073L10.6139 0.877396ZM3.69526 17.1382C3.57024 17.0131 3.5 16.8436 3.5 16.6667V7.98916L10 2.93361L16.5 7.98917V16.6667C16.5 16.8436 16.4298 17.0131 16.3047 17.1382C16.1797 17.2632 16.0101 17.3334 15.8333 17.3334H13.5V10.0001C13.5 9.44779 13.0523 9.00008 12.5 9.00008H7.5C6.94772 9.00008 6.5 9.44779 6.5 10.0001V17.3334H4.16667C3.98986 17.3334 3.82029 17.2632 3.69526 17.1382ZM11.5 17.3334V11.0001H8.5V17.3334H11.5Z" fill="currentColor"/>',
@@ -194,7 +194,6 @@
   var edges = C.edgeCases || [];
   var variants = C.variants || [];
   var starts = C.startPoints || [];
-  var situations = C.situations || []; /* use cases that aren't edge cases; same toggle model */
   var hidden = store.get("barHidden", "0") === "1";
   var openMenu = null;
   var bar = null, peek = null;
@@ -239,16 +238,16 @@
       '<span class="pbar-item-label">' + esc(label) + "</span>" +
       (desc ? '<span class="pbar-item-desc">' + esc(desc) + "</span>" : "") + "</a>";
   }
-  /* a Screens row: the screen to jump to, plus a radio in the Start column */
+  /* a Screens row: the screen to jump to, and in its own column a switch that
+     makes it the start (one at a time; switching it off means the default) */
   function screenRow(href, label, desc, cur, startOn, startAttrs) {
     var inner = '<span class="pbar-item-label">' + esc(label) + "</span>" + (cur ? ic("check") : "") +
       (desc ? '<span class="pbar-item-desc">' + esc(desc) + "</span>" : "");
-    var main = !href ? '<span class="pbar-row-main">' + inner + "</span>"
-      : cur ? '<span class="pbar-row-main is-current">' + inner + "</span>"
+    var main = cur ? '<span class="pbar-row-main is-current">' + inner + "</span>"
       : '<a class="pbar-row-main" href="' + esc(carry(href)) + '">' + inner + "</a>";
     return '<div class="pbar-item pbar-row' + (cur ? " is-on" : "") + '">' + main +
-      '<button class="pbar-radio' + (startOn ? " is-on" : "") + '" role="radio" aria-checked="' + startOn + '" ' + startAttrs +
-      ' aria-label="Start here" title="' + (startOn ? "The prototype opens here" : "Open the prototype here") + '"></button></div>';
+      '<span class="pbar-row-side"><button class="pbar-start' + (startOn ? " is-on" : "") + '" role="switch" aria-checked="' + startOn + '" ' + startAttrs +
+      ' aria-label="Start here" title="' + (startOn ? "The prototype opens here — switch off for the default start" : "Open the prototype here") + '"><span class="pbar-switch" aria-hidden="true"></span></button></span></div>';
   }
   /* where the current page lives, without the toolbar flag: what a start remembers */
   function herePath() { try { var u = new URL(api.plainLink()); return u.pathname + u.search; } catch (e) { return location.pathname; } }
@@ -285,19 +284,18 @@
       /* every screen, with a Start column: the radio marks where the prototype
          opens (one at a time; the top row resets to the prototype's own start) */
       html: function () {
-        var sp = api.startPath(), sk = store.get("startAt", "");
-        var out = '<div class="pbar-menu-head pbar-cols"><span>Jump to a screen</span><span class="pbar-col-start" title="Where the prototype opens">Start</span></div>';
-        out += screenRow(null, "Default start", "The prototype's own first page.", false, !sp && !sk, "data-start-default");
-        var group = null;
+        var sp = api.startPath(), sk = store.get("startAt", ""), any = !!(sp || sk);
+        var out = '<div class="pbar-menu-head pbar-cols"><span>Screens</span>' +
+          '<button class="pbar-reset' + (any ? "" : " is-off") + '" data-start-default' + (any ? "" : " disabled") +
+          ' title="' + (any ? "Back to the prototype's own first page" : "The prototype opens on its own first page") + '">Reset start</button></div>';
         screens.forEach(function (s) {
-          if (s.group && s.group !== group) { group = s.group; out += '<div class="pbar-menu-head pbar-menu-sub">' + esc(group) + "</div>"; }
           var href = resolve(s.href), p = pathOf(href);
           var cur = s.match !== undefined ? matches(s.match) : samePage(href);
           out += screenRow(href, s.label, s.desc, cur, sp === p, 'data-start-path="' + esc(p) + '"');
         });
         if (starts.length) {
           out += '<div class="pbar-menu-head pbar-menu-sub">Start points</div>';
-          starts.forEach(function (s) { out += screenRow(null, s.label, s.desc, false, !sp && sk === s.key, 'data-start-key="' + esc(s.key) + '"'); });
+          starts.forEach(function (s) { out += item(!sp && sk === s.key ? "is-on" : "", 'data-start-key="' + esc(s.key) + '"', s.label, !sp && sk === s.key ? ic("check") : "", s.desc); });
         }
         var extra = unregisteredPages();
         if (extra.length) {
@@ -310,35 +308,26 @@
       bind: function (slot, close, reopen) {
         function setStart(path, key) { store.set("startPath", path || ""); store.set("startAt", key || ""); reopen(); }
         slot.querySelectorAll("[data-start-default]").forEach(function (b) { b.addEventListener("click", function () { setStart("", ""); }); });
-        slot.querySelectorAll("[data-start-path]").forEach(function (b) { b.addEventListener("click", function () { setStart(b.getAttribute("data-start-path"), ""); }); });
+        slot.querySelectorAll("[data-start-path]").forEach(function (b) {
+          b.addEventListener("click", function () { setStart(b.classList.contains("is-on") ? "" : b.getAttribute("data-start-path"), ""); });
+        });
         slot.querySelectorAll("[data-start-key]").forEach(function (b) { b.addEventListener("click", function () { setStart("", b.getAttribute("data-start-key")); }); });
       }
     },
     edges: {
-      /* "Use cases": situations to show the same screens in, with the edge
-         cases among them under their own sub-header */
       html: function () {
-        var out = '<div class="pbar-menu-head">Use cases</div>' +
-          '<div class="pbar-menu-note">Show the same screens for another situation. Switching reloads the page.</div>' +
-          situations.map(function (s) { return toggle(api.situation(s.key), 'data-situation="' + esc(s.key) + '"', s.label, s.desc); }).join("");
-        if (edges.length) {
-          out += '<div class="pbar-menu-head pbar-menu-sub">Edge cases</div>' +
-            edges.map(function (e) { return toggle(api.edge(e.key), 'data-edge="' + esc(e.key) + '"', e.label, e.desc); }).join("");
-        }
-        return out;
+        return '<div class="pbar-menu-head">Edge cases</div>' +
+          '<div class="pbar-menu-note">Flip these to show a screen both ways. They reload the page.</div>' +
+          edges.map(function (e) { return toggle(api.edge(e.key), 'data-edge="' + esc(e.key) + '"', e.label, e.desc); }).join("");
       },
       bind: function (slot) {
-        function flip(list, prefix, read) {
-          return function (b) {
-            b.addEventListener("click", function () {
-              var k = b.getAttribute("data-" + prefix), d = byKey(list, k), on = !read(k);
-              store.set(prefix + "." + k, on ? "1" : "0");
-              if (d && typeof d.apply === "function") { d.apply(on); render(); } else location.reload();
-            });
-          };
-        }
-        slot.querySelectorAll("[data-edge]").forEach(flip(edges, "edge", api.edge));
-        slot.querySelectorAll("[data-situation]").forEach(flip(situations, "situation", api.situation));
+        slot.querySelectorAll("[data-edge]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var k = b.getAttribute("data-edge"), e = byKey(edges, k), on = !api.edge(k);
+            store.set("edge." + k, on ? "1" : "0");
+            if (typeof e.apply === "function") { e.apply(on); render(); } else location.reload();
+          });
+        });
       }
     },
     variants: {
@@ -428,16 +417,15 @@
       publishHeight();
       return;
     }
-    var offCount = edges.filter(function (e) { return api.edge(e.key) !== !!e.on; }).length +
-      situations.filter(function (s) { return api.situation(s.key) !== !!s.on; }).length;
+    var offCount = edges.filter(function (e) { return api.edge(e.key) !== !!e.on; }).length;
     bar = el(
       '<div class="pbar">' +
       (version && versions.length > 1
         ? '<div class="pbar-menu-wrap" data-menu="version"><button class="pbar-badge pbar-badge-btn" data-tip="Switch version">' + esc(badge) +
           '<span class="pbar-chev">' + ic("chevron-down", 12) + "</span></button><div class=\"pbar-menu-slot\"></div></div>"
         : '<span class="pbar-badge">' + esc(badge) + "</span>") +
-      (screens.length || unregisteredPages().length ? menuButton("screens", "shapes", "Screens", isDevHost() ? unregisteredPages().length : 0) : "") +
-      ((situations.length || edges.length) ? menuButton("edges", "randomize", "Use cases", offCount) : "") +
+      (screens.length || unregisteredPages().length ? menuButton("screens", "clipboard-note", "Screens", isDevHost() ? unregisteredPages().length : 0) : "") +
+      (edges.length ? menuButton("edges", "randomize", "Edge cases", offCount) : "") +
       (variants.length ? menuButton("variants", "sliders", "Variants") : "") +
       (screens.length ? "" : menuButton("start", "home", "Start")) + /* with screens, Start is a column in that menu */
       '<span class="pbar-spacer" aria-hidden="true"></span>' +

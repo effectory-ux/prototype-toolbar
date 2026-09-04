@@ -208,8 +208,7 @@ window.PROTO_TOOLBAR = {
   live: "https://effectory-ux.github.io/gtma/",   // powers the Share menu
   versions: [{ key, label, desc, match: /-before-/, go: u => "…-before-….html" }],
   screens:  [{ key, label, desc, href: u => "….html", group: "Results dashboard" }],
-  situations:[{ key, label, desc, on: false }],      // "Use cases" menu: persisted toggles, like edge cases
-  edgeCases:[{ key, label, desc, on: false }],       // listed under "Edge cases" in that same menu
+  edgeCases:[{ key, label, desc, on: false }],       // persisted; toggling reloads
   variants: [{ key, label, desc, on: u => bool, href: (on, u) => "….html" }], // or persisted like edges
   startPoints: [{ key, label }],
   shell: true,                     // false: plain block above the page instead of a body column
@@ -297,9 +296,9 @@ with the prototype and the deployed bar shows it too. Elsewhere it stays in the
 browser. The static flavor does the same per page (`ProtoToolbar.seen()`).
 
 **Start is a column of the Screens menu.** Every row in Screens — registered
-screens, learned ones, legacy start points — has a radio in a **Start** column:
-one at a time, the top row ("Default start") resets to the prototype's own
-first page. The chosen start is remembered per prototype in the browser (path
+screens and learned ones — has a switch in its own column: switch one on and
+the prototype opens there (one at a time; switching it off, or **Reset start**
+in the menu header, goes back to the prototype's own first page). The chosen start is remembered per prototype in the browser (path
 plus query, so a dialog deep link like `?open=review` can be a start) and
 applied before the app reads its first hash; static prototypes read it with
 `ProtoToolbar.startPath()` in their index page. A separate Start menu only
