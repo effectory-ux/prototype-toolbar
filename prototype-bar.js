@@ -123,6 +123,11 @@
     },
     /* where the prototype should open, as chosen in the Start menu */
     startAt: function (fallback) { return store.get("startAt", fallback); },
+    /* a page chosen with "Start on the page I'm on" (a path), or null; an
+       index page can send visitors there: location.replace(ProtoToolbar.startPath()) */
+    startPath: function () { return store.get("startPath", "") || null; },
+    /* every page this prototype has shown in this browser: { path, title, count, lastSeen } */
+    seen: function () { try { return JSON.parse(store.get("seen", "{}")); } catch (e) { return {}; } },
     plainLink: plainLink,
     carry: carry,
     version: VERSION
@@ -130,6 +135,27 @@
   window.ProtoToolbar = api;
 
   if (!barActive()) return; /* render nothing at all */
+
+  /* What the bar learns: the pages it has been on. A page no Screens entry
+     points to is listed in the Screens menu as "seen here, not in this list". */
+  (function recordPage() {
+    var seen = api.seen(), k = location.pathname, e = seen[k] || { path: k, count: 0 };
+    e.count += 1; e.lastSeen = new Date().toISOString(); e.title = document.title || k.split("/").pop();
+    seen[k] = e; store.set("seen", JSON.stringify(seen));
+  })();
+  /* title may be set later in <head>; refresh it once the page has parsed */
+  document.addEventListener("DOMContentLoaded", function () {
+    var seen = api.seen(); if (seen[location.pathname]) { seen[location.pathname].title = document.title || seen[location.pathname].title; store.set("seen", JSON.stringify(seen)); }
+  });
+  function unregisteredPages() {
+    var out = [];
+    Object.keys(api.seen()).forEach(function (p) {
+      var listed = screens.some(function (s) { try { return new URL(resolve(s.href), location.href).pathname === p; } catch (e) { return false; } });
+      if (!listed && p !== location.pathname) out.push(api.seen()[p]);
+      else if (!listed && !screens.length) out.push(api.seen()[p]);
+    });
+    return out.sort(function (a, b) { return (b.lastSeen || "").localeCompare(a.lastSeen || ""); });
+  }
 
   /* ---- icons: the same glyphs as icons.jsx, inlined ------------------------ */
   var SVG = {
@@ -248,6 +274,14 @@
           var cur = s.match !== undefined ? matches(s.match) : samePage(href);
           out += link("", href, s.label, s.desc, cur);
         });
+        var extra = unregisteredPages();
+        if (extra.length) {
+          out += '<div class="pbar-menu-head pbar-menu-sub">Seen here, not in this list</div>' +
+            '<div class="pbar-menu-note">Pages this prototype has shown that no entry above points to. Register them in the config, or jump there.</div>';
+          extra.forEach(function (e) {
+            out += '<a class="pbar-item" href="' + esc(carry(e.path)) + '"><span class="pbar-item-label">' + esc(e.title || e.path) + '</span><span class="pbar-item-desc pbar-mono">' + esc(e.path) + "</span></a>";
+          });
+        }
         return out;
       },
       bind: function () {}
@@ -287,13 +321,19 @@
     },
     start: {
       html: function () {
-        var cur = api.startAt(starts[0] && starts[0].key);
+        var cur = api.startAt(starts[0] && starts[0].key), sp = api.startPath();
         return '<div class="pbar-menu-head">Where the prototype opens</div>' +
-          starts.map(function (s) { return item(s.key === cur ? "is-on" : "", 'data-start="' + esc(s.key) + '"', s.label, s.key === cur ? ic("check") : "", s.desc); }).join("");
+          starts.map(function (s) { return item(s.key === cur && !sp ? "is-on" : "", 'data-start="' + esc(s.key) + '"', s.label, s.key === cur && !sp ? ic("check") : "", s.desc); }).join("") +
+          (starts.length ? '<div class="pbar-menu-head pbar-menu-sub">Or any page</div>' : "") +
+          toggle(!!sp, "data-start-here", sp ? "Starts on a chosen page" : "Start on the page I'm on",
+            sp ? "The prototype's index sends visitors to " + sp + ". Turn off to go back." : "Remembers this page as the start, in this browser, without registering it. The index page has to honour ProtoToolbar.startPath().");
       },
       bind: function (slot, close) {
         slot.querySelectorAll("[data-start]").forEach(function (b) {
-          b.addEventListener("click", function () { store.set("startAt", b.getAttribute("data-start")); close(); });
+          b.addEventListener("click", function () { store.set("startAt", b.getAttribute("data-start")); store.set("startPath", ""); close(); });
+        });
+        slot.querySelector("[data-start-here]").addEventListener("click", function () {
+          store.set("startPath", api.startPath() ? "" : location.pathname); close();
         });
       }
     },
@@ -330,7 +370,7 @@
   function menuButton(key, icon, label, count) {
     return '<div class="pbar-menu-wrap" data-menu="' + key + '">' +
       '<button class="pbar-btn" data-tip="' + esc(label) + '">' + ic(icon) + '<span class="pbar-lbl">' + esc(label) + "</span>" +
-      (count ? '<span class="pbar-count">' + count + "</span>" : "") + "</button>" +
+      (count ? '<span class="pbar-count' + (key === "screens" ? " is-learn" : "") + '" title="' + (key === "screens" ? "Seen here, not in the Screens list" : "") + '">' + count + "</span>" : "") + "</button>" +
       '<div class="pbar-menu-slot"></div></div>';
   }
 
@@ -356,10 +396,10 @@
         ? '<div class="pbar-menu-wrap" data-menu="version"><button class="pbar-badge pbar-badge-btn" data-tip="Switch version">' + esc(badge) +
           '<span class="pbar-chev">' + ic("chevron-down", 12) + "</span></button><div class=\"pbar-menu-slot\"></div></div>"
         : '<span class="pbar-badge">' + esc(badge) + "</span>") +
-      (screens.length ? menuButton("screens", "shapes", "Screens") : "") +
+      (screens.length || unregisteredPages().length ? menuButton("screens", "shapes", "Screens", isDevHost() ? unregisteredPages().length : 0) : "") +
       (edges.length ? menuButton("edges", "randomize", "Edge cases", offCount) : "") +
       (variants.length ? menuButton("variants", "sliders", "Variants") : "") +
-      (starts.length ? menuButton("start", "home", "Start") : "") +
+      menuButton("start", "home", "Start") +
       '<span class="pbar-spacer" aria-hidden="true"></span>' +
       (updateTo
         ? '<a class="pbar-update pbar-tt is-right" href="https://github.com/effectory-ux/prototype-toolbar/releases" target="_blank" rel="noopener" ' +

@@ -276,6 +276,40 @@ import * as PROTO from "./data/proto-config.js";
 explicit props win. Handlers (`onUseCase`, `edges`…) stay props — they are
 app state, not config.
 
+## What the toolbar learns
+
+A config lists the screens someone registered; the prototype shows more than
+that. So the bar watches the route while the prototype is used (`discover.js`)
+and keeps a map of every distinct screen it has seen — ids folded, so
+`/surveys/s3/…` and `/surveys/s7/…` are one screen — with how often, when, and
+**which Screens entry led there** (learned when you pick one). Screens with no
+entry leading to them appear in the Screens menu as **"Seen here, not in this
+list"** (with an amber count on a dev host) and are printed by
+
+```sh
+node node_modules/prototype-toolbar/check.js phase-2   # exit 1 if any are unregistered
+```
+
+On a dev host the map is written to `public/proto-discovered.json` through the
+dev server (the `protoEdits` vite plugin, no extra wiring), so it is committed
+with the prototype and the deployed bar shows it too. Elsewhere it stays in the
+browser. The static flavor does the same per page (`ProtoToolbar.seen()`).
+
+**Start on any screen.** The Start menu always offers "Start on the screen
+I'm on": the exact route is remembered per prototype (origin + path) in the
+browser and applied before the app reads its first hash, so nothing has to be
+registered to make a screen the start. Picking a registered start point turns
+it off again. Static prototypes get `ProtoToolbar.startPath()` for their index
+page to honour.
+
+**The rule for agents building a prototype:** the toolbar learns *screens* by
+itself, but *edge cases, variants and start points* only exist in the
+conversation. When a prompt introduces a state ("what if the account has no
+teams"), a variation ("show the compact version too") or an entry point
+("open on the questionnaire"), register it in the prototype's proto-config in
+the same change — and before committing, run `check.js` and register or
+dismiss what it lists.
+
 ## Share
 
 The share icon opens a small menu with the LIVE address of the prototype,

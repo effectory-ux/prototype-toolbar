@@ -214,3 +214,9 @@ a.pbar-item { text-decoration: none; }
   border: 1px solid rgba(245,183,66,.45); color: #f5c264; font-size: 10.5px; font-weight: 700;
   letter-spacing: .04em; text-decoration: none; }
 .pbar-update:hover { background: rgba(245,183,66,.28); }
+
+/* ---- Discovery (discover.js) ------------------------------------------------
+   What the bar learned: unregistered screens get a teal-to-amber count on the
+   Screens button (dev only) and a routes list in the menu. */
+.pbar-count.is-learn { background: #f5c264; color: #14161a; margin-left: 2px; }
+.pbar-mono { font-family: 'Liberation Mono', ui-monospace, monospace; font-size: 10.5px; color: #9aa3b2; overflow-wrap: anywhere; }

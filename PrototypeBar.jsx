@@ -18,6 +18,7 @@ import { Ic } from "./icons.jsx";
 import { initCopyEdits, enableEdit, disableEdit, discardEdits, editCount, undoEdit, redoEdit, canUndo, canRedo, isDevHost } from "./copyEdit.js";
 import { currentVersion, versionUrl, versionAvailable, ensureVersionServer, liveShareUrl, versionFreshness } from "./versions.js";
 import { EventLayer } from "./EventLayer.jsx";
+import { createDiscovery, getStartRoute, setStartRoute } from "./discover.js";
 import "./prototype-bar.css";
 
 // Who gets the toolbar:
@@ -77,6 +78,15 @@ const saveHidden = (prefix, v) => { try { localStorage.setItem(hideKey(prefix), 
 //               their camelCase equivalents) and renders every menu that has
 //               entries — declare a setting there and it shows up, no wiring.
 //               Explicit props win over config.
+//   routeKey    optional (route) => key: how routes collapse into screens for
+//               discovery (see discover.js); the default folds ids.
+//
+// What the bar LEARNS (discover.js): every route the prototype shows while
+// you use it, which Screens entry leads where, and a "start on this screen"
+// choice — kept per prototype and, on a dev host, written to
+// public/proto-discovered.json so it ships with the repo. Screens the
+// prototype has shown but nobody registered are listed under the Screens menu
+// and by check.js.
 export function PrototypeBar(props) {
   const c = props.config || {};
   const useCases = props.useCases ?? c.useCases ?? c.USE_CASES ?? [];
@@ -90,6 +100,23 @@ export function PrototypeBar(props) {
   const versions = props.versions ?? c.versions ?? c.VERSIONS ?? [];
   const { edges = {}, varState = {}, onUseCase = () => {}, onToggleEdge = () => {}, onToggleVariant = () => {} } = props;
   const version = currentVersion(versions);
+  // Discovery: one instance per bar, booted once; re-render when it learns.
+  const discRef = useRef(null);
+  if (!discRef.current) discRef.current = createDiscovery({ prefix: storagePrefix, routeKey: props.routeKey });
+  const disc = discRef.current;
+  const [, setSeen] = useState(0);
+  useEffect(() => { disc.init(() => setSeen(n => n + 1)); }, []); // eslint-disable-line
+  const unregistered = disc.unregistered();
+  const [startRoute, setStartRouteState] = useState(() => getStartRoute());
+  const startHere = () => {
+    const here = disc.current();
+    const next = startRoute === here ? null : here;
+    setStartRoute(next); setStartRouteState(next);
+    // A route start replaces the registered start point (the app's own start
+    // logic stays out of the way), and vice versa.
+    if (next && startPoints[0]) { setStart(startPoints[0].key); setStartAt(storagePrefix, startPoints[0].key); }
+    setMenu(null);
+  };
   const [switching, setSwitching] = useState(null);   // version key being started
   const [switchFail, setSwitchFail] = useState(null); // version key that would not start
   const [published, setPublished] = useState({});     // key -> bool (deployed check)
@@ -204,8 +231,8 @@ export function PrototypeBar(props) {
     return () => { live = false; };
   }, [menu]); // eslint-disable-line
 
-  const pick = (key) => { setMenu(null); onUseCase(key); };
-  const pickStart = (key) => { setStart(key); setStartAt(storagePrefix, key); setMenu(null); };
+  const pick = (key) => { setMenu(null); disc.note(key); onUseCase(key); };
+  const pickStart = (key) => { setStart(key); setStartAt(storagePrefix, key); setStartRoute(null); setStartRouteState(null); setMenu(null); };
   const offCount = edgeCases.filter(e => edges[e.key] !== e.on).length;
 
   if (!barActive(toolbarKey)) return null;
@@ -276,11 +303,12 @@ export function PrototypeBar(props) {
         <span className="pbar-badge">{version ? version.label : "Toolbar"}</span>
       )}
 
-      {useCases.length > 0 && (
+      {(useCases.length > 0 || unregistered.length > 0) && (
         <div className="pbar-menu-wrap">
           <button className={"pbar-btn" + (menu === "cases" ? " is-open" : "")} data-tip="Screens"
             onClick={() => setMenu(m => (m === "cases" ? null : "cases"))}>
             <Ic name="shapes" size={14} /><span className="pbar-lbl">Screens</span>
+            {isDevHost() && unregistered.length > 0 && <span className="pbar-count is-learn" title="Seen here, not in the Screens list">{unregistered.length}</span>}
           </button>
           {menu === "cases" && (
             <>
@@ -293,6 +321,18 @@ export function PrototypeBar(props) {
                     <span className="pbar-item-desc">{c.desc}</span>
                   </button>
                 ))}
+                {unregistered.length > 0 && (
+                  <>
+                    <div className="pbar-menu-head pbar-menu-sub">Seen here, not in this list</div>
+                    <div className="pbar-menu-note">Screens this prototype has shown that no entry above leads to. Register them in proto-config.js, or jump there (as far as the prototype's deep links allow).</div>
+                    {unregistered.map(e => (
+                      <a key={e.route} className="pbar-item" href={e.example} onClick={() => setMenu(null)}>
+                        <span className="pbar-item-label">{e.label}</span>
+                        <span className="pbar-item-desc pbar-mono">{e.route}</span>
+                      </a>
+                    ))}
+                  </>
+                )}
               </div>
             </>
           )}
@@ -352,8 +392,7 @@ export function PrototypeBar(props) {
         </div>
       )}
 
-      {startPoints.length > 0 && (
-        <div className="pbar-menu-wrap">
+      <div className="pbar-menu-wrap">
           <button className={"pbar-btn" + (menu === "start" ? " is-open" : "")} data-tip="Start"
             onClick={() => setMenu(m => (m === "start" ? null : "start"))}>
             <Ic name="home" size={14} /><span className="pbar-lbl">Start</span>
@@ -364,16 +403,23 @@ export function PrototypeBar(props) {
               <div className="pbar-menu">
                 <div className="pbar-menu-head">Where the prototype opens</div>
                 {startPoints.map(s => (
-                  <button key={s.key} className={"pbar-item" + (start === s.key ? " is-on" : "")} onClick={() => pickStart(s.key)}>
+                  <button key={s.key} className={"pbar-item" + (start === s.key && !startRoute ? " is-on" : "")} onClick={() => pickStart(s.key)}>
                     <span className="pbar-item-label">{s.label}</span>
-                    {start === s.key && <Ic name="check" size={14} />}
+                    {start === s.key && !startRoute && <Ic name="check" size={14} />}
                   </button>
                 ))}
+                {startPoints.length > 0 && <div className="pbar-menu-head pbar-menu-sub">Or any screen</div>}
+                <button className={"pbar-item" + (startRoute ? " is-on" : "")} role="switch" aria-checked={!!startRoute} onClick={startHere}>
+                  <span className="pbar-item-label">{startRoute ? "Starts on a chosen screen" : "Start on the screen I'm on"}</span>
+                  <span className="pbar-switch" aria-hidden="true" />
+                  <span className="pbar-item-desc">{startRoute
+                    ? <>The prototype opens at <span className="pbar-mono">{startRoute}</span>. Turn off to go back to the list above.</>
+                    : "Remembers this exact screen as the start, in this browser, without registering it."}</span>
+                </button>
               </div>
             </>
           )}
         </div>
-      )}
 
       <span className="pbar-spacer" aria-hidden="true" />
 
