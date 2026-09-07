@@ -1,0 +1,11 @@
+{
+  "name": "prototype-toolbar",
+  "owner": { "name": "Effectory UX" },
+  "plugins": [
+    {
+      "name": "prototype-toolbar",
+      "source": "./",
+      "description": "The prototype toolbar skill: wire the shared toolbar into a prototype and keep it truthful. Until the team marketplace exists, this repo is its own one-plugin marketplace."
+    }
+  ]
+}

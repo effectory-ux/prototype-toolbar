@@ -15,7 +15,8 @@ git fetch -q origin && [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)
 new="$(npm version "$kind" --no-git-tag-version)"; new="${new#v}"
 sed -i '' "s/var VERSION = \"[^\"]*\"/var VERSION = \"$new\"/" prototype-bar.js
 sed -i '' "s/var MAJOR = \"[^\"]*\"/var MAJOR = \"${new%%.*}\"/" load.js
-git add package.json prototype-bar.js load.js
+sed -i '' "s/\"version\": \"[^\"]*\"/\"version\": \"$new\"/" .claude-plugin/plugin.json
+git add package.json prototype-bar.js load.js .claude-plugin/plugin.json
 git commit -q -m "Release v$new"
 git tag -a "v$new" -m "Release v$new"
 git push -q origin main "v$new"

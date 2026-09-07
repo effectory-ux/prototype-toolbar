@@ -10,6 +10,9 @@
 #                                does from the published site, but from here, unreleased
 #   toolbar.sh status            every host's toolbar version versus this clone
 #   toolbar.sh release <kind>    cut a release (see release.sh): patch | minor | major
+#   toolbar.sh skill             zip skills/prototype-toolbar/ for upload as an Organization
+#                                Skill (Claude.ai → Organization settings → Skills → Add) — the
+#                                stopgap until the team's plugin marketplace lists this repo
 #   toolbar.sh unhook            remove the post-commit hooks of the former subtree model
 #
 # Hosts are listed in hosts.json. Distribution itself needs none of this: static
@@ -78,12 +81,19 @@ PY
     echo "  $(basename "$p"): hook removed"
   done
 }
+cmd_skill() {
+  local out="$HERE/dist"; mkdir -p "$out"
+  local zip="$out/prototype-toolbar-skill-v$(myver).zip"; rm -f "$zip"
+  (cd "$HERE/skills/prototype-toolbar" && zip -rq "$zip" . -x "*.DS_Store")
+  echo "built $zip"; echo "upload: Claude.ai → Organization settings → Skills → Add → select the zip (replace the previous version)"
+}
 case "${1:-status}" in
+  skill)   cmd_skill ;;
   serve)   shift; cmd_serve "$@" ;;
   vendor)  shift; cmd_vendor "$@" ;;
   status)  cmd_status ;;
   release) shift; exec "$HERE/release.sh" "$@" ;;
   unhook)  cmd_unhook ;;
   -h|--help|help) sed -n '2,18p' "$0" ;;
-  *) echo "toolbar.sh: unknown command '$1' (serve | vendor | status | release | unhook)" >&2; exit 2 ;;
+  *) echo "toolbar.sh: unknown command '$1' (serve | vendor | status | release | skill | unhook)" >&2; exit 2 ;;
 esac

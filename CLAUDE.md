@@ -9,6 +9,12 @@ files — `PrototypeBar.jsx` (React) and `prototype-bar.js` (vanilla) — sharin
 `prototype-bar.css` and the link contract in README.md. Keep both flavors in
 step when you change behaviour or copy.
 
+The repo is also a Claude Code **plugin**: `skills/prototype-toolbar/SKILL.md` is
+the skill that wires the toolbar into prototypes (`.claude-plugin/` holds the
+manifest and a self-pointing marketplace). When the wiring or the rules change,
+change the skill in the same commit; `./toolbar.sh skill` zips it for an
+Organization Skill upload.
+
 ## Rules
 
 - Nothing in here may know about any one prototype. Host-specific things

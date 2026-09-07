@@ -10,15 +10,16 @@
 # in github.com/effectory-ux/prototype-toolbar and release it.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MAJOR="${1:-$(sed -n 's/.*var MAJOR = "\([0-9]*\)".*/\1/p' "$HERE/load.js" | head -1)}"
+MAJOR="${1:-$(sed -n 's/.*var MAJOR = "\([0-9]*\)".*/\1/p' "$HERE/load.js" 2>/dev/null | head -1)}"
+MAJOR="${MAJOR:-1}" # a fresh folder has no load.js yet: start on release line 1
 BASE="https://effectory-ux.github.io/prototype-toolbar/v${MAJOR}/"
 FILES="version.json load.js prototype-bar.js prototype-bar.css update.sh README.md"
-before="$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$HERE/version.json" 2>/dev/null | head -1)"
+before="$( { sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$HERE/version.json" 2>/dev/null || true; } | head -1)"
 tmp="$(mktemp -d)"
 for f in $FILES; do
   curl -fsSL "$BASE$f" -o "$tmp/$f" || { echo "update.sh: could not fetch $BASE$f" >&2; rm -rf "$tmp"; exit 1; }
 done
 for f in $FILES; do mv "$tmp/$f" "$HERE/$f"; done
 chmod +x "$HERE/update.sh"; rm -rf "$tmp"
-after="$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$HERE/version.json" | head -1)"
+after="$( { sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$HERE/version.json" || true; } | head -1)"
 echo "prototype toolbar: ${before:-?} → $after (release line v$MAJOR)"
