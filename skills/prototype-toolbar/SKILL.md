@@ -13,6 +13,12 @@ description: >
 
 # Prototype toolbar
 
+**When to wire it, and when not.** The toolbar belongs in prototypes that get
+reviewed and tested — where colleagues jump between states, flip edge cases and
+hand out tester links. A demo with one story to tell (a marketing before/after,
+a research artefact) does not need it: don't wire it by reflex, ask when in
+doubt. Once wired, the tester link never shows it, so it costs nothing.
+
 One toolbar, shared by every Effectory UX prototype, **published, not copied**:
 source and docs at https://github.com/effectory-ux/prototype-toolbar, runtime on
 https://effectory-ux.github.io/prototype-toolbar/v1/ (release line 1, semver).
