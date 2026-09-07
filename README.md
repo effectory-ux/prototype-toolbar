@@ -365,6 +365,22 @@ no menu.
 At boot, a host with registered start points reads the chosen one with
    `getStartAt(storagePrefix, fallbackKey)`.
 
+## The skill: how agents wire it
+
+`skills/prototype-toolbar/` is a Claude skill (and this repo a Claude Code
+plugin, see `.claude-plugin/`). Its `SKILL.md` is only a shell: at the start of a
+session the agent runs `./toolbar-skill.sh sync`, which fetches `guide.md` (the
+actual instructions), `adopt.sh` and this README from `main` into the project's
+`.ds-cache/prototype-toolbar/`, with the bundled copies as offline fallback —
+the same mechanism as the design-system skill. Changing how prototypes are
+wired is therefore a commit to `guide.md`; the uploaded skill only needs a
+re-upload when `SKILL.md` or the script change, and `sync` says so.
+`./toolbar-skill.sh adopt <slug>` gives a static prototype the toolbar and a
+fresh key in one step. Install as a Claude Code plugin with
+`claude plugin marketplace add effectory-ux/prototype-toolbar` and
+`claude plugin install prototype-toolbar@prototype-toolbar`; or upload the zip
+from `./toolbar.sh skill` as an Organization Skill.
+
 ## One toolbar, many prototypes: releases and versions
 
 The toolbar is **published, not copied**. Its source is this repo; its

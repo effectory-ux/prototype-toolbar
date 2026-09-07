@@ -9,11 +9,15 @@ files — `PrototypeBar.jsx` (React) and `prototype-bar.js` (vanilla) — sharin
 `prototype-bar.css` and the link contract in README.md. Keep both flavors in
 step when you change behaviour or copy.
 
-The repo is also a Claude Code **plugin**: `skills/prototype-toolbar/SKILL.md` is
-the skill that wires the toolbar into prototypes (`.claude-plugin/` holds the
-manifest and a self-pointing marketplace). When the wiring or the rules change,
-change the skill in the same commit; `./toolbar.sh skill` zips it for an
-Organization Skill upload.
+The repo is also a Claude Code **plugin** and an Organization Skill
+(`skills/prototype-toolbar/`, `.claude-plugin/` holds the manifest and a
+self-pointing marketplace). The skill fetches its own content live, like the
+design-system skill: `SKILL.md` is a thin shell and `toolbar-skill.sh sync`
+pulls `guide.md`, `scripts/adopt.sh` and this repo's README from `main` into
+the project's `.ds-cache/prototype-toolbar/`. So: **wiring or rule changes go
+in `guide.md`** (a commit is enough); change `SKILL.md` or `toolbar-skill.sh`
+only when unavoidable, because that needs a re-upload (`./toolbar.sh skill`
+builds the zip and sync tells users their bundle is behind).
 
 ## Rules
 
