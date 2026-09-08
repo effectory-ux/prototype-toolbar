@@ -160,7 +160,7 @@ wired inside `PrototypeBar`.
 Most Engage design-system prototypes are plain HTML pages with no build step
 (gtma, group-linking, results-dashboard, question-library). For those the same
 bar ships as dependency-free vanilla JS, **published on GitHub Pages** —
-`https://effectory-ux.github.io/prototype-toolbar/v1/` — the way the design
+`https://effectory-ux.github.io/prototype-toolbar/v2/` — the way the design
 system itself is consumed. A page includes ONE local file, the loader, plus its
 own config; the loader brings in the stylesheet and the bar:
 
@@ -194,7 +194,7 @@ Adopting it in a static prototype is one command in its root, with or without
 the skill:
 
 ```sh
-curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v1/adopt.sh | bash -s -- <slug>
+curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v2/adopt.sh | bash -s -- <slug>
 ```
 
 It creates `toolbar/`, writes `proto-config.js`, puts the two
@@ -413,7 +413,7 @@ runtime is served from this repo's GitHub Pages site by `.github/workflows/pages
 
 | URL | What |
 |---|---|
-| `…/prototype-toolbar/v1/` | release line 1: the newest 1.x release — what hosts follow |
+| `…/prototype-toolbar/v2/` | release line 2: the newest 2.x release — what hosts follow |
 | `…/prototype-toolbar/v1.2.3/` | one release, immutable |
 | `…/prototype-toolbar/` | the tip of main ("latest"), may be ahead of any release |
 

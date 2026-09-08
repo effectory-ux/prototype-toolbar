@@ -53,8 +53,8 @@ localhost (serve.py, port 3000) and for the live site. A colleague
 without this skill gets the same from the release line, in the prototype root:
 
 ```bash
-curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v1/adopt.sh | bash -s -- <slug>   # wire
-curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v1/adopt.sh | bash -s -- link     # links
+curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v2/adopt.sh | bash -s -- <slug>   # wire
+curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v2/adopt.sh | bash -s -- link     # links
 ```
 
 Then fill `proto-config.js`: the prototype's real `name`, `live` (its Pages

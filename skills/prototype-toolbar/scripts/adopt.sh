@@ -9,13 +9,15 @@
 #                            prototype's first page), for localhost and for the live site
 #
 # Without the skill, straight from the release line (run in the prototype's root):
-#   curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v1/adopt.sh | bash -s -- <slug>
-#   curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v1/adopt.sh | bash -s -- link
+#   curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v2/adopt.sh | bash -s -- <slug>
+#   curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v2/adopt.sh | bash -s -- link
 #
 # Local links assume the team's serve.py (port 3000; PORT overrides). A slug is a
 # short lowercase id for the prototype: letters, digits, hyphens.
 set -euo pipefail
-LINE="${PROTO_TOOLBAR_LINE:-https://effectory-ux.github.io/prototype-toolbar/v1/}"  # env override: test an unreleased line
+# The release line this copy adopts from. build-site.sh rewrites the vN when it
+# publishes the script onto a line, so the copy served at /v2/ adopts from v2.
+LINE="${PROTO_TOOLBAR_LINE:-https://effectory-ux.github.io/prototype-toolbar/v2/}"  # env override: test an unreleased line
 CONFIG="proto-config.js"
 PORT="${PORT:-3000}"
 
@@ -93,7 +95,7 @@ cmd_adopt() {
   done
   chmod +x toolbar.new/update.sh toolbar.new/adopt.sh
   rm -rf toolbar && mv toolbar.new toolbar
-  echo "toolbar/ ← prototype toolbar $(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' toolbar/version.json | head -1) (release line v1)"
+  echo "toolbar/ ← prototype toolbar $(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' toolbar/version.json | head -1) (release line $(printf '%s' "$LINE" | sed -E 's#.*/(v[0-9]+)/?$#\1#'))"
 
   if [ ! -f "$CONFIG" ]; then
     local remote repo live=""

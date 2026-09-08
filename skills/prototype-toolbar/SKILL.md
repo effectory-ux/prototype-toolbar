@@ -16,7 +16,7 @@ description: >
 
 One toolbar, shared by every Effectory UX prototype, **published, not copied**:
 source and docs at https://github.com/effectory-ux/prototype-toolbar, runtime on
-https://effectory-ux.github.io/prototype-toolbar/v1/. This file is only the
+https://effectory-ux.github.io/prototype-toolbar/v2/. This file is only the
 shell of the skill. The instructions live in the repo and are fetched live, so
 a change there is a commit in the repo, never a re-upload of this skill.
 

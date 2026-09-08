@@ -32,7 +32,7 @@ resolve_ref() {
 PIN="$(resolve_ref)"
 RAW="https://raw.githubusercontent.com/$REPO/$PIN"
 SKILL="$RAW/skills/prototype-toolbar"
-LINE="https://effectory-ux.github.io/prototype-toolbar/v1/version.json"
+PAGES="https://effectory-ux.github.io/prototype-toolbar"   # the release line is derived from the repo version
 CACHE="${PROTO_TOOLBAR_CACHE:-.ds-cache/prototype-toolbar}"
 SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 mkdir -p "$CACHE" || { echo "  ✗ cannot create $CACHE — run this from the prototype's root, not from the skill folder" >&2; exit 1; }
@@ -93,10 +93,12 @@ cmd_sync() {
   fetch "$SKILL/SKILL.md" "$CACHE/SKILL.md" "SKILL.md (for the bundle check)" >/dev/null || true
   fetch "$SKILL/toolbar-skill.sh" "$CACHE/toolbar-skill.sh" "toolbar-skill.sh (for the bundle check)" >/dev/null || true
   fetch "$RAW/package.json" "$CACHE/package.json" "repo version" >/dev/null || true
-  fetch "$LINE" "$CACHE/version.json" "published release" >/dev/null || true
+  # which release line the repo is on now (2.x → /v2/), so this never lags a major
+  MAJOR="$(ver_of "$CACHE/package.json")"; MAJOR="${MAJOR%%.*}"; [ "$MAJOR" = "?" ] && MAJOR=2
+  fetch "$PAGES/v$MAJOR/version.json" "$CACHE/version.json" "published release" >/dev/null || true
   chmod +x "$CACHE/adopt.sh" 2>/dev/null
   gitignore_cache
-  echo "  repo v$(ver_of "$CACHE/package.json") @ ${PIN:0:7} · published release line v1 = $(ver_of "$CACHE/version.json") · bundle v$(bundle_v)"
+  echo "  repo v$(ver_of "$CACHE/package.json") @ ${PIN:0:7} · published release line v$MAJOR = $(ver_of "$CACHE/version.json") · bundle v$(bundle_v)"
   bundle_notice
 }
 run_adopt() {  # adopt.sh, the freshest one (the cached or bundled one offline), with the given mode
@@ -110,7 +112,7 @@ cmd_status() {
   if [ -s "$CACHE/guide.md" ]; then
     echo "  cached guide    : $(date -r "$CACHE/guide.md" '+%d %b %H:%M' 2>/dev/null) ($(wc -l < "$CACHE/guide.md" | tr -d ' ') lines)"
     echo "  cached files    : $(ls "$CACHE" | grep -v '^\.fetch' | tr '\n' ' ')"
-    echo "  repo version    : $(ver_of "$CACHE/package.json")   published v1: $(ver_of "$CACHE/version.json")   bundle: $(bundle_v)"
+    echo "  repo version    : $(ver_of "$CACHE/package.json")   published line: $(ver_of "$CACHE/version.json")   bundle: $(bundle_v)"
     [ -s toolbar/version.json ] && echo "  this prototype  : toolbar/ at $(ver_of toolbar/version.json)"
     bundle_notice
   else

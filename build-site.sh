@@ -17,8 +17,15 @@ emit() { # <ref> <dir> <version-label> <tag-or-empty>
   mkdir -p "$dir"
   git archive "$ref" $FILES VENDORED.md | tar -x -C "$dir"
   mv "$dir/VENDORED.md" "$dir/README.md"
-  # adopt.sh lives in the skill folder; published flat so `curl …/v1/adopt.sh | bash` works
-  git show "$ref:skills/prototype-toolbar/scripts/adopt.sh" > "$dir/adopt.sh" 2>/dev/null || rm -f "$dir/adopt.sh"
+  # adopt.sh lives in the skill folder; published flat so `curl …/vN/adopt.sh | bash` works
+  if git show "$ref:skills/prototype-toolbar/scripts/adopt.sh" > "$dir/adopt.sh" 2>/dev/null; then
+    # the copy served on a line adopts from THAT line (no sed -i: this also runs on Linux in CI)
+    if [ -n "$tag" ]; then
+      sed -E "s#(prototype-toolbar/)v[0-9]+/#\1${tag%%.*}/#g" "$dir/adopt.sh" > "$dir/adopt.sh.new" \
+        && mv "$dir/adopt.sh.new" "$dir/adopt.sh" || rm -f "$dir/adopt.sh.new"
+    fi
+    chmod +x "$dir/adopt.sh"
+  else rm -f "$dir/adopt.sh"; fi
   printf '{ "version": "%s", "tag": "%s", "commit": "%s", "date": "%s" }\n' \
     "$ver" "$tag" "$(git rev-parse --short "$ref")" "$(git log -1 --format=%cI "$ref")" > "$dir/version.json"
 }
@@ -45,6 +52,6 @@ cat > "$OUT/index.html" <<HTML
 <h2>Release lines (what prototypes follow)</h2><ul>${lines:-<li>No release yet</li>}</ul>
 <h2>Releases</h2><ul>${rows:-<li>No release yet</li>}</ul>
 <h2>Latest (tip of main)</h2><ul><li><a href="prototype-bar.js">prototype-bar.js</a>, <a href="prototype-bar.css">prototype-bar.css</a>, <a href="load.js">load.js</a>, <a href="adopt.sh">adopt.sh</a>, <a href="version.json">version.json</a></li></ul>
-<p>Give a static prototype the toolbar, from its root: <code>curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v1/adopt.sh | bash -s -- &lt;slug&gt;</code> — and <code>… | bash -s -- link</code> prints its colleague and tester links.</p>
+<p>Give a static prototype the toolbar, from its root: <code>curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v2/adopt.sh | bash -s -- &lt;slug&gt;</code> — and <code>… | bash -s -- link</code> prints its colleague and tester links.</p>
 HTML
 echo "site built in $OUT: $(ls "$OUT" | tr '\n' ' ')"
