@@ -1,7 +1,7 @@
 {
   "name": "prototype-toolbar",
   "description": "Wires Effectory's shared prototype toolbar into UX prototypes (static HTML or React/Vite) and keeps it truthful: screens, edge cases, variants, start points, colleague vs tester links.",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "author": { "name": "Effectory UX" },
   "homepage": "https://github.com/effectory-ux/prototype-toolbar"
 }
