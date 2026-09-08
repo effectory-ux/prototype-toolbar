@@ -4,12 +4,13 @@ A self-contained toolbar for prototypes, in the spirit of the Figma /
 Claude Design prototype chrome. It comes in two flavors from the same repo —
 `PrototypeBar.jsx` for React/Vite prototypes (an npm dependency) and
 `prototype-bar.js` for static HTML pages (loaded from GitHub Pages, see "Static
-prototypes" below) — sharing one stylesheet and one link contract: a dark, compact row **above** the prototype
-(never an overlay) with four menus — jump to a **use case**, flip **edge
-cases**, compare **variants**, choose the **start point** — plus an **Events**
-mode (the Piwik analytics spec drawn over the live UI) and the current deep
-link with a copy button. Hide it with Ctrl+` or the close button; a peek tab
-on the right screen edge brings it back.
+prototypes" below) — sharing one stylesheet and one link contract: a dark, compact row **above** the prototype (never an overlay) with
+menus to jump between **Screens** (each row with a start switch), flip **edge
+cases**, compare **variants** and switch **versions** — plus **Share** (the tester
+link, or the colleague link with the toolbar) and, in React prototypes, an
+**Events** mode (the Piwik analytics spec drawn over the live UI) and inline copy
+editing. Collapse it with the button on its right or Ctrl+`; a peek tab on the
+right screen edge brings it back.
 
 This repo knows nothing about any one prototype: in CYOS it is the single
 toolbar every phase imports (phase-2 does so from `phase-2/src/app.jsx` and
@@ -196,8 +197,9 @@ from a release line — the CDN-with-local-fallback pattern:
 Adopting it in a new static prototype: create `toolbar/`, run
 `curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v1/update.sh | bash -s`
 inside it (or copy the files from another host and run `toolbar/update.sh`),
-add the two tags to every screen page, write `proto-config.js`, add the host
-to `hosts.json` here.
+add the two tags to every page, write `proto-config.js`. Then tell the toolbar
+maintainer, who lists the host in this repo's `hosts.json` (used only by
+`toolbar.sh status`; nothing in the prototype depends on it).
 
 `proto-config.js` defines `window.PROTO_TOOLBAR`. Every field is optional; a
 menu with no entries is not rendered. Functions receive the current `URL` and
@@ -296,7 +298,9 @@ node node_modules/prototype-toolbar/check.js phase-2   # exit 1 if any are unreg
 On a dev host the map is written to `public/proto-discovered.json` through the
 dev server (the `protoEdits` vite plugin, no extra wiring), so it is committed
 with the prototype and the deployed bar shows it too. Elsewhere it stays in the
-browser. The static flavor does the same per page (`ProtoToolbar.seen()`).
+browser. The static flavor keeps the same map per page in the browser only
+(`ProtoToolbar.seen()`): no file, no check command — the Screens menu is the
+list.
 To see route changes written with `history.replaceState`, the React bar
 patches `pushState`/`replaceState` once per page and dispatches a
 `proto:route` event — the only thing it adds to the page besides
@@ -309,9 +313,10 @@ default start and shows as on until another is chosen; switching the chosen one
 off goes back to the default. The chosen start is remembered per prototype in the browser (path
 plus query, so a dialog deep link like `?open=review` can be a start) and
 applied before the app reads its first hash; static prototypes read it with
-`ProtoToolbar.startPath()` in their index page —
-`location.replace(ProtoToolbar.carry(ProtoToolbar.startPath()))`, so the bar
-travels along. A separate Start menu only
+`ProtoToolbar.startPath()` in their index page, which therefore carries the two
+tags too —
+`location.replace(ProtoToolbar.carry(ProtoToolbar.startPath() || "overview.html"))`,
+so the bar travels along. A separate Start menu only
 appears for hosts without a Screens list. Dialogs and sub-pages count as
 screens: register them with a deep-link `href` and a `match` that checks the
 query, and let the page open the dialog when it sees the parameter.
@@ -338,7 +343,7 @@ address without the flag.
 ## Versions: the badge names the prototype and switches between them
 
 Pass `versions` — the host's registry of the prototype's versions, one entry
-per version: `{ key, label, desc, port, path, toolbarKey }` (in CYOS the
+per version: `{ key, label, desc, port, path, url, toolbarKey }` (in CYOS the
 registry is `prototype-versions.js` at the repo root; the toolbar folder
 itself stays host-agnostic). The bar works out which entry is the page you
 are on FROM THE URL — deployed path segment first, dev port as fallback — so

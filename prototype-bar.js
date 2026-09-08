@@ -6,16 +6,14 @@
    from `window.PROTO_TOOLBAR`, a small config object the host defines in its
    own file BEFORE this script (see README.md, "Static prototypes").
 
-   Include, right after <body> opens, so the bar renders before the page
-   content parses (no pop-in):
+   A page includes it through the loader, right after <body> opens:
 
-     <link rel="stylesheet" href="toolbar/prototype-bar.css" />   (in <head>)
-     <script src="proto-config.js"></script>                       (the host's)
-     <script src="toolbar/prototype-bar.js"></script>
+     <script src="proto-config.js"></script>          (the host's)
+     <script src="toolbar/load.js"></script>          (writes in the stylesheet and this file)
 
-   Who sees it — the link contract: on a dev host (localhost, 127.0.0.1,
-   *.local, a LAN address) always; anywhere else only for a URL carrying
-   `?<key>-toolbar-active`. Without the flag this script installs NOTHING —
+   Who sees it — the link decides, everywhere: a host with a key shows the bar
+   only for a URL carrying `?<key>-toolbar-active`, localhost included; a host
+   without a key gets it on dev hosts. Without the flag nothing is installed —
    no DOM, no listeners, no shortcut — so a tester can never stumble into it.
    Every navigation the bar performs carries the flag along; Share strips it.
 

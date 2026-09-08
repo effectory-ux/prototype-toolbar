@@ -2,47 +2,64 @@
 
 This is the live part of the skill, fetched from the repo by `toolbar-skill.sh sync`;
 editing it is a commit in github.com/effectory-ux/prototype-toolbar, no re-upload.
+The config contract (every field of `window.PROTO_TOOLBAR` and of the React
+props) is in the toolbar README the sync put next to this guide:
+`.ds-cache/prototype-toolbar/README.md` (in a React host also
+`node_modules/prototype-toolbar/README.md`). The prototype's own
+`toolbar/README.md` is only a pointer.
 
-**When to wire it, and when not.** The toolbar belongs in prototypes that get
-reviewed and tested — where colleagues jump between states, flip edge cases and
-hand out tester links. A demo with one story to tell (a marketing before/after,
-a research artefact) does not need it: don't wire it by reflex, ask when in
-doubt. Once wired, the tester link never shows it, so it costs nothing.
+## Two flavors, one bar
 
-One toolbar, shared by every Effectory UX prototype, **published, not copied**:
-source and docs at https://github.com/effectory-ux/prototype-toolbar, runtime on
-https://effectory-ux.github.io/prototype-toolbar/v1/ (release line 1, semver).
-For the full config contract, read the README the sync put next to this guide
-(`README.md` in the cache) — or the prototype's own vendored `toolbar/README.md`.
+- **Static** prototype (Engage design-system HTML pages, no build): a vendored
+  `toolbar/` folder loaded by `toolbar/load.js`, configured by a `proto-config.js`.
+- **React/Vite** prototype (CYOS): the npm package `prototype-toolbar`, configured
+  by a `src/data/proto-config.js` module.
 
-## The link contract (never break it)
+Which one a prototype is decides the recipe below. A prototype that has neither
+does not have the toolbar yet: ask once before wiring it.
 
-- A prototype mints **one key** (an opaque id like `gl-9k4p`), once, in its config.
-- **Colleague link** = the URL with `?<key>-toolbar-active` → the bar shows.
-- **Tester link** = the same URL without it → nothing of the toolbar is even
-  requested. Localhost included: a keyed prototype shows the bar only with the flag.
-- Every navigation the bar performs carries the flag; Share strips it.
+## Wiring a static prototype
 
-## Wiring a static prototype (Engage design-system HTML)
-
-Run, in the prototype's root:
+From the prototype's root (the folder its pages are served from):
 
 ```bash
-./toolbar-skill.sh adopt <slug>      # e.g. adopt gl — runs the freshest adopt.sh
+bash "<skill folder>/toolbar-skill.sh" adopt <slug>     # e.g. adopt gl
 ```
 
-It creates `toolbar/` from the published release line, writes a `proto-config.js`
-with a fresh key and empty lists, and prints the two tags. Then, on every
-screen page (not on redirect-only index pages), right after `<body>` opens:
+It creates `toolbar/` from the published release line, writes `proto-config.js`
+with a fresh key and empty lists (or keeps an existing one), and prints the two
+tags. Put them on **every page, the index included**, right after `<body>` opens:
 
 ```html
 <script src="proto-config.js"></script>
 <script src="toolbar/load.js"></script>
 ```
 
-Fill `proto-config.js`: `name`, `live` (the Pages URL), and `screens`,
-`versions`, `edgeCases`, `variants` as the prototype has them (shape in the
-README). Pages in a subfolder use `../toolbar/…` paths, or a `<base>`.
+Pages in a subfolder use `../proto-config.js` and `../toolbar/load.js`, or a
+`<base>`. A redirect-only index keeps its two tags and redirects *after* them,
+honouring the start a colleague chose and carrying the flag — replace a
+`<meta http-equiv="refresh">` with:
+
+```html
+<script>location.replace(ProtoToolbar.carry(ProtoToolbar.startPath() || "overview.html"));</script>
+```
+
+Then fill `proto-config.js`: the prototype's real `name`, `live` (its Pages
+URL), and `screens`, `versions`, `edgeCases`, `variants` as the prototype has
+them. A screen is `{ key, label, desc, href }` — `href` a filename relative to
+the page, or a function of the current URL; mark the default start with
+`default: true`. A dialog or sub-state is a screen too: give it a deep-link
+`href` (`overview.html?open=review`) and a `match` that checks the query, and
+let the page open the dialog when it sees the parameter.
+
+**Several prototypes in one repo** (a docs repo with many pages at the root):
+one shared `toolbar/`, but one config per prototype — `proto-config-<slug>.js`
+with its own `key`, `prefix`, `name`, `live` and `screens` — and each
+prototype's pages include their own config file before `toolbar/load.js`.
+
+Look at it locally: serve the root (`python3 -m http.server 8000`) and open a
+page with the colleague link, `…?<key>-toolbar-active`. Without the flag the
+page must show nothing of the toolbar.
 
 ## Wiring a React/Vite prototype
 
@@ -50,34 +67,63 @@ README). Pages in a subfolder use `../toolbar/…` paths, or a `<base>`.
 npm install github:effectory-ux/prototype-toolbar#semver:^1.0.0
 ```
 
-Import `PrototypeBar` and `getStartAt` from `prototype-toolbar/PrototypeBar.jsx`,
-add `protoEdits()` and `protoVersions(VERSIONS)` from the two
-`prototype-toolbar/vite-plugin-*.js` files to the Vite plugins, wrap the app in
-`<div className="proto-shell">`, and keep the prototype's own settings in a
-`proto-config.js` (`PROTO_TOOLBAR_KEY`, `USE_CASES`, `START_POINTS`,
-`EDGE_CASES`, `VARIANTS`). CYOS is the reference: `phase-2/src/app.jsx` and
-`phase-2/vite.config.js` in https://github.com/effectory-ux/cyos.
+- `src/data/proto-config.js` exports `PROTO_TOOLBAR_KEY` (mint once: `<slug>-`
+  plus four random letters or digits), `PROTO_STORAGE_PREFIX`, `USE_CASES`,
+  `EDGE_CASES`, `VARIANTS`. Hand the module over whole:
+  `import * as PROTO from "./data/proto-config.js"` and
+  `<PrototypeBar config={PROTO} onUseCase={goto} edges={edges} onToggleEdge={toggle} />`
+  inside `<div className="proto-shell">…</div>`. Handlers stay props: they are
+  app state.
+- `vite.config.js`: add `protoEdits()` from
+  `prototype-toolbar/vite-plugin-proto-edits.js` to the plugins. With more
+  than one version also `protoVersions(VERSIONS)` and `versions={VERSIONS}`,
+  where `VERSIONS` is a `prototype-versions.js` registry at the repo root:
+  `[{ key, label, desc, port, path, url, toolbarKey }]` (README → Versions).
+  One version: skip both.
+- Start is a Screens row (the first `USE_CASES` entry is the default). The
+  older `START_POINTS`/`getStartAt` pair only matters for a host without
+  `USE_CASES`.
+
+CYOS is the reference: `phase-2/src/app.jsx` and `phase-2/vite.config.js` in
+https://github.com/effectory-ux/cyos.
 
 ## Keeping the toolbar truthful — the rules that make it useful
 
+These rules apply where the toolbar is wired (a `proto-config.js` or a
+`PrototypeBar` import exists).
+
 1. **Screens the bar learns by itself.** While a prototype runs, every route it
-   shows is recorded; on a Vite dev server into `public/proto-discovered.json`
-   (commit it). Screens no entry leads to appear under Screens as "seen here,
-   not in this list" and in `node node_modules/prototype-toolbar/check.js <dir>`.
-   Before committing UI work: run the check, then register each listed screen
-   (a `USE_CASES` entry with its state setup, or a `screens` entry) or decide it
-   is not a screen.
-2. **Edge cases, variants and start points only exist in the conversation.**
+   shows is recorded. Screens no entry leads to appear under Screens as
+   **"Seen here, not in this list"** (amber count on a dev host).
+   - React: the dev server writes the map to `public/proto-discovered.json`
+     (commit it); `node node_modules/prototype-toolbar/check.js <package-dir>`
+     prints the unregistered screens and exits 1 when there are any. Run it
+     before committing UI work. Registering a `USE_CASES` entry alone does not
+     clear an item: open the new entry once from the Screens menu on the dev
+     server so the bar learns which route it leads to, then commit the
+     rewritten `proto-discovered.json`.
+   - Static: the map lives in the browser only. Open the Screens menu on a dev
+     host and register what "Seen here" shows as `screens` entries; there is
+     no file and no check command.
+   Either way, decide per item: register it, or it is not a screen.
+2. **Edge cases, variants and start screens only exist in the conversation.**
    When a prompt introduces an account difference ("what if there are no
    teams"), a design variation ("show the compact version too") or an entry
    point ("open on the questionnaire"), register it in the prototype's config
-   in the same change. A state that exists in the app but not in the toolbar
-   is a bug.
+   in the same change: an edge case as an `edgeCases`/`EDGE_CASES` entry, a
+   variation as a `variants`/`VARIANTS` entry, an entry point as a screen
+   (with `default: true` if it is the new default). A state that exists in
+   the app but not in the toolbar is a bug.
 3. **Never edit files in `toolbar/` or `node_modules/prototype-toolbar`.** They
    are copies; the next update overwrites them. Change the toolbar in its own
    repo and release it (below).
 4. **Copy is UX copy.** Labels and descriptions in the config are read by
-   colleagues: short, specific, no jargon. Apply the ux-copy skill.
+   colleagues: short, specific, no jargon. Apply the ux-copy skill when it is
+   available.
+5. **The page's own navigation keeps the flag.** The bar carries it on the
+   page's `<a>` links; for `location.href` or `location.replace` use
+   `ProtoToolbar.carry(url)`. The API exists on every page, tester pages
+   included, so no `if` is needed.
 
 ## Updating a prototype's copy
 
@@ -94,4 +140,7 @@ rules). `./toolbar.sh serve`, then open any prototype once with
 tree (`=off` to stop). React: start the app with
 `PROTO_TOOLBAR_DEV=<clone>`. Keep both flavors in step (`PrototypeBar.jsx` and
 `prototype-bar.js`). Commits change nothing for anyone; only
-`./toolbar.sh release patch|minor|major` does. Ask before releasing.
+`./toolbar.sh release patch|minor|major` does. Ask before releasing. Tell the
+toolbar maintainer about a newly wired prototype so it is listed in the repo's
+`hosts.json` (used only by the maintainer's status command; nothing in the
+prototype depends on it).

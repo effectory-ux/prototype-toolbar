@@ -87,8 +87,8 @@ cmd_skill() {
   local out="$HERE/dist"; mkdir -p "$out"
   local zip="$out/prototype-toolbar-skill-v$(myver).zip"; rm -f "$zip"
   local tmp; tmp="$(mktemp -d)"
-  cp -R "$HERE/skills/prototype-toolbar/." "$tmp/" && cp "$HERE/README.md" "$tmp/README.md"
-  (cd "$tmp" && zip -rq "$zip" . -x "*.DS_Store"); rm -rf "$tmp"
+  cp -R "$HERE/skills/prototype-toolbar/." "$tmp/" && cp "$HERE/README.md" "$tmp/README.md" && myver > "$tmp/VERSION"
+  (cd "$tmp" && zip -rq "$zip" . -x "*.DS_Store" -x ".ds-cache/*"); rm -rf "$tmp"
   echo "built $zip"; echo "upload: Claude.ai → Organization settings → Skills → Add → select the zip (replace the previous version)"
   echo "re-upload only when skills/prototype-toolbar/SKILL.md or toolbar-skill.sh change; guide.md, adopt.sh and README are fetched live"
 }
