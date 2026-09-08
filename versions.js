@@ -55,16 +55,16 @@ export const versionAvailable = async (versions, v) => {
 // The live (deployed) address of THIS version — the link you hand to anyone.
 // Built from the registry's `url`, so it is right from localhost too, and
 // always points at the version you are on rather than at whatever was
-// deployed last. By default it opens at the prototype's start; `page: true`
-// carries the current screen (the hash route) along. Null when the registry
-// has no live address.
-export const liveShareUrl = (versions, { toolbar = false, page = false } = {}) => {
+// deployed last. It carries the screen you are looking at (the hash route),
+// because that is what someone means by "share this"; `start: true` gives the
+// version's front door instead. Null when the registry has no live address.
+export const liveShareUrl = (versions, { toolbar = false, start = false } = {}) => {
   try {
     const cur = currentVersion(versions);
     if (!cur || !cur.url) return null;
     const u = new URL(cur.url);
     if (toolbar) u.search = "?prototype-toolbar"; // the one flag, every prototype
-    if (page) u.hash = window.location.hash;
+    if (!start) u.hash = window.location.hash;
     return u.toString();
   } catch (_) { return null; }
 };

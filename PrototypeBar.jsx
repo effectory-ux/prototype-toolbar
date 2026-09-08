@@ -202,8 +202,8 @@ export function PrototypeBar(props) {
   // prototype's start unless "Share this page" is on, and the toolbar stays
   // out of the link unless "Include the toolbar" says otherwise.
   const [shareToolbar, setShareToolbar] = useState(false);
-  const [sharePage, setSharePage] = useState(false);
-  const shareUrl = liveShareUrl(versions, { toolbar: shareToolbar, page: sharePage });
+  const [shareStart, setShareStart] = useState(false);
+  const shareUrl = liveShareUrl(versions, { toolbar: shareToolbar, start: shareStart });
   // Dev only: warn when local work is not on the live link yet. Checked when
   // the Share menu opens (the dev server compares git against the deploy's
   // commit stamp); null = cannot tell, and nothing is shown.
@@ -509,19 +509,19 @@ export function PrototypeBar(props) {
               </div>
               {shareUrl ? (
                 <>
-                  <div className="pbar-menu-note">A live link for anyone — no dev server needed.</div>
+                  <div className="pbar-menu-note">A live link to the screen you are on, for anyone — no dev server needed.</div>
                   <div className="pbar-share-url">{shareUrl}</div>
-                  <button className={"pbar-item" + (sharePage ? " is-on" : "")}
-                    role="switch" aria-checked={sharePage} onClick={() => setSharePage(v => !v)}>
-                    <span className="pbar-item-label">Share this page</span>
+                  <button className={"pbar-item" + (shareStart ? " is-on" : "")}
+                    role="switch" aria-checked={shareStart} onClick={() => setShareStart(v => !v)}>
+                    <span className="pbar-item-label">Open at the start</span>
                     <span className="pbar-switch" aria-hidden="true" />
-                    <span className="pbar-item-desc">The link opens on the screen you are looking at now instead of at the prototype's start.</span>
+                    <span className="pbar-item-desc">The link opens at this version's first screen instead of the one you are looking at.</span>
                   </button>
                   <button className={"pbar-item" + (shareToolbar ? " is-on" : "")}
                     role="switch" aria-checked={shareToolbar} onClick={() => setShareToolbar(v => !v)}>
                     <span className="pbar-item-label">Include the toolbar</span>
                     <span className="pbar-switch" aria-hidden="true" />
-                    <span className="pbar-item-desc">The link carries the toolbar key, so whoever opens it gets this bar too.</span>
+                    <span className="pbar-item-desc">The link carries ?prototype-toolbar, so whoever opens it gets this bar too.</span>
                   </button>
                   <button className="pbar-item" onClick={copyShare}>
                     <span className="pbar-item-label">{shared ? "Copied" : "Copy live link"}</span>

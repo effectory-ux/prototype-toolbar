@@ -87,8 +87,8 @@
   function samePage(href) {
     try { return new URL(href, location.href).pathname === location.pathname; } catch (e) { return false; }
   }
-  /* This page's path relative to the site root — the piece appended to the
-     live address for "Share this page". Locally the site root is "/"; on the
+  /* This page's path relative to the site root — appended to the live address
+     so a shared link points at THIS page. Locally the site root is "/"; on the
      deployed site it is the live URL's own path. */
   function relPath() {
     var p = location.pathname;
@@ -101,13 +101,23 @@
     p = p.replace(/^\/+/, "");
     return /^(index\.html?)?$/.test(p) ? "" : p;
   }
-  /* The LIVE address of this prototype (from the host's `live`), opening at
-     its start unless `page`, toolbar-free unless `toolbar`. */
+  /* The LIVE address of the page you are looking at: the host's `live` (the
+     site root) plus this page's path. That is the default because `live` alone
+     is only the prototype's front door when the prototype IS the whole site —
+     in a repo that hosts several prototypes it is somebody else's index. A
+     prototype that wants a fixed front door sets `start` in its config, and
+     then Share can offer it (`opts.start`). Toolbar-free unless `toolbar`. */
   function liveShareUrl(opts) {
     if (!C.live) return null;
     try {
       var u = new URL(C.live);
-      if (opts.page) { u.pathname = u.pathname.replace(/\/?$/, "/") + relPath(); u.search = new URL(plainLink()).search; u.hash = location.hash; }
+      if (opts.start) {
+        u.pathname = u.pathname.replace(/\/?$/, "/") + String(C.start || "").replace(/^\/+/, "");
+      } else {
+        u.pathname = u.pathname.replace(/\/?$/, "/") + relPath();
+        u.search = new URL(plainLink()).search;
+        u.hash = location.hash;
+      }
       if (opts.toolbar) u.search = (u.search ? u.search + "&" : "?") + FLAG;
       return u.toString();
     } catch (e) { return null; }
@@ -396,33 +406,35 @@
     },
     share: {
       html: function () {
-        var live = liveShareUrl({ toolbar: shareToolbar, page: sharePage });
+        var live = liveShareUrl({ toolbar: shareToolbar, start: shareStart });
         if (!live) {
           return '<div class="pbar-menu-head pbar-share-head">Share</div>' +
             '<div class="pbar-menu-note">No live address is set up for this prototype. This copies the current address without the toolbar.</div>' +
             item("", "data-copy", "Copy link");
         }
         return '<div class="pbar-menu-head pbar-share-head">Share</div>' +
-          '<div class="pbar-menu-note">A live link for anyone — no dev server needed.</div>' +
+          '<div class="pbar-menu-note">A live link to this page, for anyone — no dev server needed.</div>' +
           '<div class="pbar-share-url">' + esc(live) + "</div>" +
-          toggle(sharePage, "data-share-page", "Share this page", "The link opens on the screen you are looking at now instead of at the prototype's start.") +
-          toggle(shareToolbar, "data-share-toolbar", "Include the toolbar", "The link carries the toolbar key, so whoever opens it gets this bar too.") +
+          (C.start !== undefined
+            ? toggle(shareStart, "data-share-start", "Open at the start", "The link opens at the prototype's first page instead of the page you are looking at.")
+            : "") +
+          toggle(shareToolbar, "data-share-toolbar", "Include the toolbar", "The link carries ?prototype-toolbar, so whoever opens it gets this bar too.") +
           item("", "data-copy", "Copy live link");
       },
       bind: function (slot, close, reopen) {
-        var p = slot.querySelector("[data-share-page]"), t = slot.querySelector("[data-share-toolbar]");
-        if (p) p.addEventListener("click", function () { sharePage = !sharePage; reopen(); });
+        var p = slot.querySelector("[data-share-start]"), t = slot.querySelector("[data-share-toolbar]");
+        if (p) p.addEventListener("click", function () { shareStart = !shareStart; reopen(); });
         if (t) t.addEventListener("click", function () { shareToolbar = !shareToolbar; reopen(); });
         var b = slot.querySelector("[data-copy]");
         b.addEventListener("click", function () {
-          var live = liveShareUrl({ toolbar: shareToolbar, page: sharePage });
+          var live = liveShareUrl({ toolbar: shareToolbar, start: shareStart });
           try { navigator.clipboard.writeText(live || plainLink()); } catch (e) {}
           b.innerHTML = '<span class="pbar-item-label">Copied</span>' + ic("check");
         });
       }
     }
   };
-  var sharePage = false, shareToolbar = false;
+  var shareStart = false, shareToolbar = false;
 
   function menuButton(key, icon, label, count) {
     return '<div class="pbar-menu-wrap" data-menu="' + key + '">' +

@@ -105,7 +105,8 @@ current `URL`.
 |---|---|---|
 | `prefix` | `"gtma"` | localStorage namespace, one per prototype |
 | `name` | `"GTMA"` | badge text when the page is in no version |
-| `live` | URL | the deployed address, for Share |
+| `live` | URL | the **site** root on Pages; Share appends this page's path, so one `live` is right even when the repo hosts several prototypes |
+| `start` | `"overview.html"` | optional front door. Set it and Share offers "Open at the start"; leave it out and Share always links to the page you are on |
 | `versions` | `{key, label, desc, match, go}` | `match` decides which version a page is (string, RegExp or function), `go` is the same screen in another version |
 | `screens` | `{key, label, desc, href, group?, default?, match?}` | `default: true` marks the start; a dialog is a screen with a deep-link `href` and a `match` on the query |
 | `edgeCases` | `{key, label, desc, on}` | persisted; toggling reloads unless you pass `apply` |

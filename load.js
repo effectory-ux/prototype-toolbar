@@ -33,17 +33,20 @@
      a second `?`. Whatever form it arrives in, it is rewritten once into the
      query — before the app reads its route, so the app sees a clean hash and
      the flag survives every hash rewrite the app does. */
+  function stripFlag(s) {          /* from a search or a hash string */
+    return String(s)
+      .replace(/([?&])prototype-toolbar(=[^&]*)?/g, "$1")
+      .replace(/\?&+/g, "?").replace(/&&+/g, "&").replace(/[?&]$/, "");
+  }
   function normalizeFlag() {
     try {
       var href = location.href;
       if (!/[?&]prototype-toolbar(?:[=&]|$)/.test(href)) return;
-      var stripped = href
-        .replace(/([?&])prototype-toolbar(=[^&#]*)?(?=[&#]|$)/g, "$1")
-        .replace(/([?&])(?=[&#]|$)/g, "");
-      var u = new URL(stripped);
-      u.search = u.search ? u.search + "&prototype-toolbar" : "?prototype-toolbar";
-      var out = u.toString().replace("prototype-toolbar=", "prototype-toolbar");
-      if (out !== href) history.replaceState(null, "", out);
+      var u = new URL(href);
+      u.search = stripFlag(u.search);          /* the flag may sit anywhere in the query… */
+      u.hash = stripFlag(u.hash);              /* …or inside the hash, at the end of the link */
+      u.search = (u.search ? u.search + "&" : "?") + "prototype-toolbar";
+      if (u.toString() !== href) history.replaceState(null, "", u.toString());
     } catch (e) {}
   }
   normalizeFlag();

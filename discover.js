@@ -149,17 +149,18 @@ export function createDiscovery({ prefix = "proto", routeKey: keyFn = routeKey }
 // arrives in, it is rewritten once into the query — at import time, so it
 // happens before the app reads its first hash and the flag survives every hash
 // rewrite the app does afterwards.
+const stripFlag = (s) => String(s)
+  .replace(/([?&])prototype-toolbar(=[^&]*)?/g, "$1")
+  .replace(/\?&+/g, "?").replace(/&&+/g, "&").replace(/[?&]$/, "");
 (function normalizeFlag() {
   try {
     const href = window.location.href;
     if (!/[?&]prototype-toolbar(?:[=&]|$)/.test(href)) return;
-    const stripped = href
-      .replace(/([?&])prototype-toolbar(=[^&#]*)?(?=[&#]|$)/g, "$1")
-      .replace(/([?&])(?=[&#]|$)/g, "");
-    const u = new URL(stripped);
-    u.search = u.search ? u.search + "&prototype-toolbar" : "?prototype-toolbar";
-    const out = u.toString().replace("prototype-toolbar=", "prototype-toolbar");
-    if (out !== href) window.history.replaceState(null, "", out);
+    const u = new URL(href);
+    u.search = stripFlag(u.search);
+    u.hash = stripFlag(u.hash);
+    u.search = (u.search ? u.search + "&" : "?") + "prototype-toolbar";
+    if (u.toString() !== href) window.history.replaceState(null, "", u.toString());
   } catch (_) {}
 })();
 

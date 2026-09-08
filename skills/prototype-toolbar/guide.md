@@ -79,8 +79,11 @@ let the page open the dialog when it sees the parameter.
 
 **Several prototypes in one repo** (a docs repo with many pages at the root):
 one shared `toolbar/`, but one config per prototype — `proto-config-<slug>.js`
-with its own `prefix`, `name`, `live` and `screens` — and each
-prototype's pages include their own config file before `toolbar/load.js`.
+with its own `prefix`, `name`, `live` and `screens` — and each prototype's
+pages include their own config file before `toolbar/load.js`. `live` stays the
+**site** root (the repo's Pages address) in every one of them: Share appends
+the page you are on, so it never links to a neighbour's index. Only set `start`
+if that prototype has a fixed front door worth offering.
 
 Look at it locally: serve the root (the project's `serve.py`, or
 `python3 -m http.server 3000`) and open any page with `?prototype-toolbar`. Without the flag the page must show nothing of the toolbar.
