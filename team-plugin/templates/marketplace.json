@@ -1,0 +1,11 @@
+{
+  "name": "effectory-ux",
+  "owner": { "name": "Effectory UX" },
+  "plugins": [
+    {
+      "name": "effectory-ux",
+      "source": "./",
+      "description": "Every Effectory UX skill in one plugin. Skills are synced from their own repos by sync-skills.sh; edit them there, never here."
+    }
+  ]
+}

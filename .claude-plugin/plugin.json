@@ -1,6 +1,6 @@
 {
-  "name": "prototype-toolbar",
-  "description": "Wires Effectory's shared prototype toolbar into UX prototypes (static HTML or React/Vite) and keeps it truthful: screens, edge cases, variants, start points, colleague vs tester links.",
+  "name": "effectory-ux",
+  "description": "Effectory UX skills. Until the team plugin exists this carries only prototype-toolbar; the team plugin keeps this same name, so the /effectory-ux:<skill> commands never change.",
   "version": "2.0.0",
   "author": { "name": "Effectory UX" },
   "homepage": "https://github.com/effectory-ux/prototype-toolbar"

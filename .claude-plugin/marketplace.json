@@ -1,11 +1,11 @@
 {
-  "name": "prototype-toolbar",
+  "name": "effectory-ux-skills",
   "owner": { "name": "Effectory UX" },
   "plugins": [
     {
-      "name": "prototype-toolbar",
+      "name": "effectory-ux",
       "source": "./",
-      "description": "The prototype toolbar skill: wire the shared toolbar into a prototype and keep it truthful. Until the team marketplace exists, this repo is its own one-plugin marketplace."
+      "description": "Effectory UX skills — currently the prototype toolbar. Stopgap until the team plugin repo lists every skill under this same plugin name; see team-plugin/ in this repo."
     }
   ]
 }

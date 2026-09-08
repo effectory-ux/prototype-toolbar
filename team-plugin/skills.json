@@ -1,0 +1,34 @@
+{
+  "_comment": "Every Effectory UX skill and where its folder lives. sync-skills.sh copies each into skills/<name>/ of the team plugin repo. `path` is a folder in that repo; `pending` marks a skill whose repo does not expose a skill folder yet.",
+  "skills": [
+    {
+      "name": "prototype-toolbar",
+      "repo": "effectory-ux/prototype-toolbar",
+      "path": "skills/prototype-toolbar",
+      "live": true,
+      "note": "Fetches its own guide/adopt.sh/README from its repo at run time (toolbar-skill.sh sync), so this copy rarely needs re-syncing."
+    },
+    {
+      "name": "effectory-design-system",
+      "repo": "effectory-ux/Engage-Design-system-",
+      "path": ".claude/skills/effectory-design-system",
+      "live": true,
+      "note": "Fetches its reference, screens and DS files at run time (ds-skill.sh sync). Its bundle also carries design-system-files/ and reference-prototypes/ — large; sparse checkout keeps the clone small."
+    },
+    {
+      "name": "ux-copy",
+      "repo": "effectory-ux/ux-copy-skill",
+      "path": ".claude/skills/ux-copy",
+      "live": false,
+      "note": "Private repo, static content: re-sync the team plugin when it changes."
+    },
+    {
+      "name": "realistic-content",
+      "repo": "effectory-ux/realistic-content-skill",
+      "path": ".",
+      "live": false,
+      "pending": true,
+      "note": "Private repo. Its SKILL.md sits at the root next to build scripts and data, and the shipped bundle is built by build.sh into dist/realistic-content.skill. Ask its owner to expose a plain skills/realistic-content/ folder (or set `path` to it once it exists), then drop `pending`."
+    }
+  ]
+}

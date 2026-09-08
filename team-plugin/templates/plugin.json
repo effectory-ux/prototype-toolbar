@@ -1,0 +1,7 @@
+{
+  "name": "effectory-ux",
+  "description": "Effectory UX skills: the prototype toolbar, the Engage design system, UX copy, realistic content. Commands read /effectory-ux:<skill>.",
+  "version": "1.0.0",
+  "author": { "name": "Effectory UX" },
+  "homepage": "https://github.com/effectory-ux/skills"
+}
