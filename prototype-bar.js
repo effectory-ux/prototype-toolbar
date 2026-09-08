@@ -34,9 +34,34 @@
     return h === "localhost" || h === "127.0.0.1" || h === "0.0.0.0" || h === "[::1]" || /\.local$/.test(h) ||
       /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
   }
+  /* One flag, appended anywhere: `?prototype-toolbar` works at the very END of
+     a link (hash routes included, …#/route?prototype-toolbar), in front of
+     other parameters, and after a stray second `?`. Whatever form it arrives
+     in it is rewritten once into the query — here rather than in load.js,
+     because load.js sits in each prototype's repo and a release cannot reach
+     it, while this file comes from the release line. It runs before the app
+     reads its route, so the app sees a clean hash and the flag survives every
+     hash rewrite the app does. */
+  function stripFlag(s) {          /* from a search or a hash string */
+    return String(s)
+      .replace(/([?&])prototype-toolbar(=[^&]*)?/g, "$1")
+      .replace(/\?&+/g, "?").replace(/&&+/g, "&").replace(/[?&]$/, "");
+  }
+  function normalizeFlag() {
+    try {
+      var href = location.href;
+      if (!/[?&]prototype-toolbar(?:[=&]|$)/.test(href)) return;
+      var u = new URL(href);
+      u.search = stripFlag(u.search);
+      u.hash = stripFlag(u.hash);
+      u.search = (u.search ? u.search + "&" : "?") + FLAG;
+      if (u.toString() !== href) history.replaceState(null, "", u.toString());
+    } catch (e) {}
+  }
+  normalizeFlag();
+
   /* The link decides, everywhere — localhost included, so what you see is what
-     the URL says. `?prototype-toolbar` is the whole rule (load.js has already
-     moved it into the query if it arrived at the end of a hash link). */
+     the URL says. `?prototype-toolbar` is the whole rule. */
   function flagged() {
     try { return new URLSearchParams(location.search).has(FLAG); }
     catch (e) { return false; }

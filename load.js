@@ -18,7 +18,7 @@
    The link decides who gets the bar: `?prototype-toolbar` on the URL loads it,
    anywhere, localhost included — so a tester's page never even requests the
    toolbar. One flag for every prototype, and it may sit at the very end of the
-   link, hash routes included (it is normalized into the query on arrival). */
+   link, hash routes included; the bar normalizes it into the query on arrival. */
 (function () {
   var MAJOR = "2"; /* the release line this copy follows; update.sh keeps it in step */
   var HOSTED = "https://effectory-ux.github.io/prototype-toolbar/v" + MAJOR + "/";
@@ -28,32 +28,20 @@
     return h === "localhost" || h === "127.0.0.1" || h === "0.0.0.0" || h === "[::1]" || /\.local$/.test(h) ||
       /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
   }
-  /* One flag, appended anywhere: `?prototype-toolbar` at the very END of a link
-     works even on a hash-routed page (…#/route?prototype-toolbar), and so does
-     a second `?`. Whatever form it arrives in, it is rewritten once into the
-     query — before the app reads its route, so the app sees a clean hash and
-     the flag survives every hash rewrite the app does. */
-  function stripFlag(s) {          /* from a search or a hash string */
-    return String(s)
-      .replace(/([?&])prototype-toolbar(=[^&]*)?/g, "$1")
-      .replace(/\?&+/g, "?").replace(/&&+/g, "&").replace(/[?&]$/, "");
+  /* The gate, and nothing else. This file is the ONE part of the toolbar that
+     lives in each prototype's repo, so a release cannot fix it — keep it to a
+     check that never has to change. It therefore accepts the flag wherever it
+     sits (query, after another parameter, or at the end of a hash link); the
+     bar itself rewrites the URL into canonical form, and that part ships with
+     every release. */
+  function flagged() {
+    try { return /[?&]prototype-toolbar(?:[=&]|$)/.test(location.href); }
+    catch (e) { return false; }
   }
-  function normalizeFlag() {
-    try {
-      var href = location.href;
-      if (!/[?&]prototype-toolbar(?:[=&]|$)/.test(href)) return;
-      var u = new URL(href);
-      u.search = stripFlag(u.search);          /* the flag may sit anywhere in the query… */
-      u.hash = stripFlag(u.hash);              /* …or inside the hash, at the end of the link */
-      u.search = (u.search ? u.search + "&" : "?") + "prototype-toolbar";
-      if (u.toString() !== href) history.replaceState(null, "", u.toString());
-    } catch (e) {}
-  }
-  normalizeFlag();
   var params;
   try { params = new URLSearchParams(location.search); }
   catch (e) { params = { has: function () { return false; }, get: function () { return null; } }; }
-  if (!params.has("prototype-toolbar")) {
+  if (!flagged()) {
     /* A tester's page: the bar is not loaded, but the API a page may call
        exists, answering with the config's defaults — page code needs no `if`. */
     if (!window.ProtoToolbar) window.ProtoToolbar = {
