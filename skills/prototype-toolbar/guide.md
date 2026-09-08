@@ -8,6 +8,18 @@ props) is in the toolbar README the sync put next to this guide:
 `node_modules/prototype-toolbar/README.md`). The prototype's own
 `toolbar/README.md` is only a pointer.
 
+## Which situation you are in
+
+Look at the folder before doing anything:
+
+- `toolbar.sh` and `prototype-bar.js` next to each other → this is the
+  toolbar's own repo. Skip to "Improving the toolbar itself" at the bottom;
+  never adopt here.
+- `proto-config.js` → a wired static prototype.
+- `prototype-toolbar` in a `package.json` → a wired React prototype.
+- None of those → a prototype that does not have the toolbar yet. Ask once
+  before wiring it (see "When to wire it, and when not").
+
 ## Two flavors, one bar
 
 - **Static** prototype (Engage design-system HTML pages, no build): a vendored
