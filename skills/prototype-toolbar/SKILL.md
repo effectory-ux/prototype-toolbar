@@ -1,15 +1,16 @@
 ---
 name: prototype-toolbar
 description: >
-  Wires Effectory's shared prototype toolbar into a UX prototype and keeps it truthful. Use it
-  whenever you build a NEW prototype (static HTML on the Engage design system, or React/Vite), or
-  add a screen, state, dialog, edge case, design variant or version (before/after) to a prototype
-  that HAS the toolbar, or someone asks for a colleague link, tester link, share link, start screen,
-  or "the toolbar". Also use it when asked to improve the toolbar itself. The toolbar is a dark bar
-  above the page with Screens (each row with a start switch), Edge cases, Variants, a version
-  switcher and Share (tester link vs colleague link); React prototypes also get inline copy
-  editing and the Piwik event layer. It learns the screens a prototype shows; edge cases, variants
-  and start screens come from prompts, so register them.
+  ALWAYS use this skill whenever a UX prototype is built or changed — a prototype, mockup, screen,
+  page, flow or component demo, including anything built with the Effectory design system. Building
+  or changing a prototype is itself the trigger: do not wait for someone to mention the toolbar, and
+  load this alongside whatever you are using to build the UI. Also use it when a screen, state,
+  dialog, edge case, design variant or version (before/after) is added to a prototype; when someone
+  asks for a colleague link, tester link, share link, start screen or "the toolbar"; and when the
+  toolbar itself needs changing. It wires Effectory's shared prototype toolbar — one flag,
+  ?prototype-toolbar, opening a bar with Screens, Edge cases, Variants, a version switcher and Share
+  — and keeps it truthful, because the states a prompt introduces have to be registered. Loading it
+  is not the same as wiring it: it also says when a prototype should not have the toolbar.
 ---
 
 # Prototype toolbar
