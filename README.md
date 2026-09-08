@@ -8,21 +8,27 @@ them without a commit.
 
 ## Use it
 
-**Add `?prototype-toolbar` to any prototype URL.** That is the whole rule —
-live or localhost, any page.
+**Add `?prototype-toolbar` after the page, before any `#`.** That is the whole
+rule — live or localhost, any page. It is a query parameter, so that is where
+it belongs, and it is the form the toolbar itself always produces.
 
 ```
 https://effectory-ux.github.io/gtma/novanta-after-overview.html?prototype-toolbar
+https://effectory-ux.github.io/cyos/phase-2/?prototype-toolbar#/surveys/s3/questionnaire
 ```
+
+On a page without a `#route` — every static prototype — "after the page" and
+"at the end" are the same spot, so you just append it. Only CYOS has hash
+routes, where the flag goes in front of the `#`.
 
 - Without the flag you get the plain prototype. Nothing of the toolbar is even
   requested, so a **tester can never stumble into it**. That is the link you
   hand to participants; **Share** in the bar copies it for you.
-- You can append the flag at the **very end** of a link, hash routes included
-  (`…/phase-2/#/surveys/s3/questionnaire?prototype-toolbar`) — it is moved into
-  the query on arrival. One catch: if you are already *on* a page with a
-  `#route` and add the flag in the address bar, the browser does not reload;
-  press reload once.
+- Sloppy forms are accepted and tidied up: after the `#`, in front of another
+  parameter, or with a stray second `?` — the bar rewrites the URL into the
+  canonical form on arrival. The exception is a page you already have open with
+  a `#route`: adding the flag there only changes the fragment, so the browser
+  does not reload. Put it before the `#`, or reload once.
 - The bar carries the flag through every jump it makes, so it never disappears
   mid-walkthrough.
 

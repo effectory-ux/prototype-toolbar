@@ -8,6 +8,15 @@ props) is in the toolbar README the sync put next to this guide:
 `node_modules/prototype-toolbar/README.md`). The prototype's own
 `toolbar/README.md` is only a pointer.
 
+## Where the flag goes
+
+`?prototype-toolbar` is a query parameter: it goes **after the page and before
+any `#`**, which is also the form the bar produces and shares. On a page
+without a hash route that is simply the end of the link. Other forms (after the
+`#`, in front of another parameter, a stray second `?`) are accepted and
+rewritten on arrival, so tell colleagues the one rule and let the bar tidy the
+rest. Never hand out a pre-v2 `?<key>-toolbar-active` link; those are dead.
+
 ## Which situation you are in
 
 Look at the folder before doing anything:
