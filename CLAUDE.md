@@ -17,7 +17,10 @@ pulls `guide.md`, `scripts/adopt.sh` and this repo's README from `main` into
 the project's `.ds-cache/prototype-toolbar/`. So: **wiring or rule changes go
 in `guide.md`** (a commit is enough); change `SKILL.md` or `toolbar-skill.sh`
 only when unavoidable, because that needs a re-upload (`./toolbar.sh skill`
-builds the zip and sync tells users their bundle is behind).
+builds the zip and sync tells users their bundle is behind). The team's channel
+is the Organization Skill upload, one per skill and no second copy: the plugin
+install is only for terminal users, because two copies of a skill both answer
+the same request.
 
 ## Rules
 

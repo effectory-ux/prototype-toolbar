@@ -389,10 +389,27 @@ the same mechanism as the design-system skill. Changing how prototypes are
 wired is therefore a commit to `guide.md`; the uploaded skill only needs a
 re-upload when `SKILL.md` or the script change, and `sync` says so.
 `./toolbar-skill.sh adopt <slug>` gives a static prototype the toolbar and a
-fresh key in one step. Install as a Claude Code plugin with
-`claude plugin marketplace add effectory-ux/prototype-toolbar` and
-`claude plugin install prototype-toolbar@prototype-toolbar`; or upload the zip
-from `./toolbar.sh skill` as an Organization Skill.
+fresh key in one step.
+
+**One channel, on purpose.** The team gets this skill as an **Organization
+Skill**: `./toolbar.sh skill` builds the zip, an admin uploads it in Claude.ai,
+and everyone has it with no setup, listed as
+`anthropic-skills:prototype-toolbar` next to the design-system and ux-copy
+skills. Installing the same skill *also* as a Claude Code plugin puts a second,
+identically-named entry in everyone's skill list and both can answer the same
+request — so don't, unless you work in the terminal, where org skills do not
+reach:
+
+```sh
+claude plugin marketplace add effectory-ux/prototype-toolbar
+claude plugin install prototype-toolbar@prototype-toolbar
+```
+
+`.claude-plugin/` stays in the repo for that case and for the team marketplace
+to point at later. A plugin's skill is always addressed `plugin:skill`, so
+whichever route you take the command carries a prefix; a bare
+`/prototype-toolbar` only happens for a copy in a personal `~/.claude/skills`
+folder, which nobody should keep alongside the org skill.
 
 ## One toolbar, many prototypes: releases and versions
 
