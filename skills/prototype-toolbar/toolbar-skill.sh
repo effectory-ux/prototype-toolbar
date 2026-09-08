@@ -18,7 +18,17 @@
 set -uo pipefail
 REPO="effectory-ux/prototype-toolbar"
 REF="${PROTO_TOOLBAR_REF:-main}"
-RAW="https://raw.githubusercontent.com/$REPO/$REF"
+# raw.githubusercontent.com caches a branch URL for five minutes, so a sync right
+# after a push could fetch yesterday's guide over today's bundle. Resolve the
+# branch to its current commit first: a commit URL is immutable, never stale.
+# If the API is unreachable (offline, rate-limited) the branch name still works.
+resolve_ref() {
+  local sha
+  sha="$(curl -fsSL --max-time 10 -H 'Accept: application/vnd.github.sha' "https://api.github.com/repos/$REPO/commits/$REF" 2>/dev/null)"
+  case "$sha" in [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]*) echo "$sha" ;; *) echo "$REF" ;; esac
+}
+PIN="$(resolve_ref)"
+RAW="https://raw.githubusercontent.com/$REPO/$PIN"
 SKILL="$RAW/skills/prototype-toolbar"
 LINE="https://effectory-ux.github.io/prototype-toolbar/v1/version.json"
 CACHE="${PROTO_TOOLBAR_CACHE:-.ds-cache/prototype-toolbar}"
@@ -84,7 +94,7 @@ cmd_sync() {
   fetch "$LINE" "$CACHE/version.json" "published release" >/dev/null || true
   chmod +x "$CACHE/adopt.sh" 2>/dev/null
   gitignore_cache
-  echo "  repo v$(ver_of "$CACHE/package.json") · published release line v1 = $(ver_of "$CACHE/version.json") · bundle v$(bundle_v)"
+  echo "  repo v$(ver_of "$CACHE/package.json") @ ${PIN:0:7} · published release line v1 = $(ver_of "$CACHE/version.json") · bundle v$(bundle_v)"
   bundle_notice
 }
 cmd_adopt() {
