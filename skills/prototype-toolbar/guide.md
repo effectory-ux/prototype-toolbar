@@ -27,21 +27,33 @@ bash "<skill folder>/toolbar-skill.sh" adopt <slug>     # e.g. adopt gl
 ```
 
 It creates `toolbar/` from the published release line, writes `proto-config.js`
-with a fresh key and empty lists (or keeps an existing one), and prints the two
-tags. Put them on **every page, the index included**, right after `<body>` opens:
+with a fresh key and empty lists (or keeps an existing one), puts the two tags
+on **every page that lacks them, the index included**, right after `<body>`
+opens, and prints the prototype's links. Safe to run again. What it adds:
 
 ```html
 <script src="proto-config.js"></script>
 <script src="toolbar/load.js"></script>
 ```
 
-Pages in a subfolder use `../proto-config.js` and `../toolbar/load.js`, or a
-`<base>`. A redirect-only index keeps its two tags and redirects *after* them,
-honouring the start a colleague chose and carrying the flag — replace a
-`<meta http-equiv="refresh">` with:
+Pages in a subfolder get `../` prefixes unless they carry a `<base>`. A
+redirect-only index keeps its two tags and redirects *after* them, honouring
+the start a colleague chose and carrying the flag; the script rewrites a
+`<meta http-equiv="refresh">` into:
 
 ```html
 <script>location.replace(ProtoToolbar.carry(ProtoToolbar.startPath() || "overview.html"));</script>
+```
+
+Check the output: a page without a `<body>` tag is listed for wiring by hand.
+Later, for new pages: `bash toolbar/adopt.sh inject`. For the links at any
+time: `bash toolbar/adopt.sh link [page]` — the colleague link and the tester
+link, for localhost (serve.py, port 3000) and for the live site. A colleague
+without this skill gets the same from the release line, in the prototype root:
+
+```bash
+curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v1/adopt.sh | bash -s -- <slug>   # wire
+curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v1/adopt.sh | bash -s -- link     # links
 ```
 
 Then fill `proto-config.js`: the prototype's real `name`, `live` (its Pages
@@ -57,9 +69,9 @@ one shared `toolbar/`, but one config per prototype — `proto-config-<slug>.js`
 with its own `key`, `prefix`, `name`, `live` and `screens` — and each
 prototype's pages include their own config file before `toolbar/load.js`.
 
-Look at it locally: serve the root (`python3 -m http.server 8000`) and open a
-page with the colleague link, `…?<key>-toolbar-active`. Without the flag the
-page must show nothing of the toolbar.
+Look at it locally: serve the root (the project's `serve.py`, or
+`python3 -m http.server 3000`) and open the colleague link that `adopt`/`link`
+printed. Without the flag the page must show nothing of the toolbar.
 
 ## Wiring a React/Vite prototype
 

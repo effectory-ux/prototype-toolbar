@@ -194,10 +194,18 @@ from a release line — the CDN-with-local-fallback pattern:
 - Without the toolbar flag the loader loads nothing (a host with a key, localhost included): a
   tester's page never even requests the toolbar.
 
-Adopting it in a new static prototype: create `toolbar/`, run
-`curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v1/update.sh | bash -s`
-inside it (or copy the files from another host and run `toolbar/update.sh`),
-add the two tags to every page, write `proto-config.js`. Then tell the toolbar
+Adopting it in a static prototype is one command in its root, with or without
+the skill:
+
+```sh
+curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v1/adopt.sh | bash -s -- <slug>
+```
+
+It creates `toolbar/`, writes `proto-config.js` with a fresh key, puts the two
+tags on every page that lacks them and prints the links. Afterwards
+`bash toolbar/adopt.sh link [page]` prints the colleague link and the tester
+link for localhost and the live site, and `bash toolbar/adopt.sh inject` wires
+new pages. Then fill `proto-config.js` (name, screens…) and tell the toolbar
 maintainer, who lists the host in this repo's `hosts.json` (used only by
 `toolbar.sh status`; nothing in the prototype depends on it).
 

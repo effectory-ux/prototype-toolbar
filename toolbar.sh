@@ -43,9 +43,10 @@ cmd_vendor() {
     p="$(hpath "$n")"; [ -d "$p" ] || { echo "  $n: no clone at $p"; continue; }
     mkdir -p "$p/toolbar"
     for f in $RUNTIME; do cp "$HERE/$f" "$p/toolbar/$f"; done
+    cp "$HERE/skills/prototype-toolbar/scripts/adopt.sh" "$p/toolbar/adopt.sh"
     cp "$HERE/VENDORED.md" "$p/toolbar/README.md"
     printf '{ "version": "%s", "tag": "", "commit": "%s", "date": "%s" }\n' "$(myver)" "$(git -C "$HERE" rev-parse --short HEAD)" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$p/toolbar/version.json"
-    chmod +x "$p/toolbar/update.sh"
+    chmod +x "$p/toolbar/update.sh" "$p/toolbar/adopt.sh"
     echo "  $n: vendored $(myver) from the working tree ($p/toolbar/)"
   done
 }
