@@ -58,11 +58,32 @@ The toolbar belongs in prototypes that get reviewed and tested. A demo with one
 story to tell does not need it. In a prototype that does not have it, ask once
 whether to wire it; never adopt by reflex.
 
+## Invoked directly — `/prototype-toolbar [link [page] | adopt <slug> | inject | status]`
+
+When the user calls the skill by name with nothing else, do the trick, in
+the current prototype's root:
+
+1. `sync` (above), then look: `proto-config.js` present → a wired static
+   prototype; `prototype-toolbar` in a `package.json` → a wired React
+   prototype; neither → not wired.
+2. **Not wired:** ask once for a slug (offer one from the folder or repo name),
+   confirm it should get the toolbar (see "When to wire it"), then `adopt <slug>`.
+   Show the links it printed and the pages it listed as needing hand-wiring;
+   then help fill `proto-config.js` (real `name`, the `screens`) from the pages
+   you see. React prototypes are wired by hand: follow the guide.
+3. **Wired:** `link [page]` and show the colleague link and the tester link,
+   local and live. If the user named a page, use it. Mention `inject` when new
+   pages lack the tags.
+
+With an argument, do just that: `link [page]`, `adopt <slug>`, `inject`, `status`.
+
 ## Commands (always by the skill-folder path, from the prototype root)
 
 ```bash
 bash "<skill folder>/toolbar-skill.sh" sync           # refresh guide, adopt script, README (cache + offline fallback)
-bash "<skill folder>/toolbar-skill.sh" adopt <slug>   # give a static prototype the toolbar and a fresh key
+bash "<skill folder>/toolbar-skill.sh" adopt <slug>   # wire a static prototype: toolbar/, config with a fresh key, tags on every page, links
+bash "<skill folder>/toolbar-skill.sh" link [page]    # colleague link + tester link, localhost (port 3000) and live
+bash "<skill folder>/toolbar-skill.sh" inject         # tags on any page that lacks them
 bash "<skill folder>/toolbar-skill.sh" status         # what is cached, how old, bundle vs repo version
 ```
 

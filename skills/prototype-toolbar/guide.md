@@ -46,9 +46,10 @@ the start a colleague chose and carrying the flag; the script rewrites a
 ```
 
 Check the output: a page without a `<body>` tag is listed for wiring by hand.
-Later, for new pages: `bash toolbar/adopt.sh inject`. For the links at any
-time: `bash toolbar/adopt.sh link [page]` — the colleague link and the tester
-link, for localhost (serve.py, port 3000) and for the live site. A colleague
+Later, for new pages: `bash toolbar/adopt.sh inject` (or `toolbar-skill.sh
+inject`). For the links at any time: `bash toolbar/adopt.sh link [page]` (or
+`toolbar-skill.sh link [page]`) — the colleague link and the tester link, for
+localhost (serve.py, port 3000) and for the live site. A colleague
 without this skill gets the same from the release line, in the prototype root:
 
 ```bash

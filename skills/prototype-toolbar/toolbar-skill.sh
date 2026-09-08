@@ -3,6 +3,8 @@
 #
 #   toolbar-skill.sh sync           refresh guide.md, adopt.sh and the toolbar README
 #   toolbar-skill.sh adopt <slug>   give a static prototype the toolbar (runs the freshest adopt.sh)
+#   toolbar-skill.sh link [page]    the prototype's colleague link and tester link, local and live
+#   toolbar-skill.sh inject         the two tags on every page that lacks them
 #   toolbar-skill.sh status         what is cached, how old, and bundle vs repo version
 #
 # Run it by its path from the PROTOTYPE'S ROOT: every successful fetch lands in
@@ -97,12 +99,13 @@ cmd_sync() {
   echo "  repo v$(ver_of "$CACHE/package.json") @ ${PIN:0:7} · published release line v1 = $(ver_of "$CACHE/version.json") · bundle v$(bundle_v)"
   bundle_notice
 }
-cmd_adopt() {
+run_adopt() {  # adopt.sh, the freshest one (the cached or bundled one offline), with the given mode
   seed "$SKILL_DIR/scripts/adopt.sh" "$CACHE/adopt.sh"
-  fetch "$SKILL/scripts/adopt.sh" "$CACHE/adopt.sh" "adopt.sh" >/dev/null || true   # the freshest one, the cached one offline
+  fetch "$SKILL/scripts/adopt.sh" "$CACHE/adopt.sh" "adopt.sh" >/dev/null || true
   [ -s "$CACHE/adopt.sh" ] || { echo "  ✗ no adopt.sh — run sync first"; exit 1; }
   bash "$CACHE/adopt.sh" "$@"
 }
+cmd_adopt() { run_adopt "$@"; }
 cmd_status() {
   if [ -s "$CACHE/guide.md" ]; then
     echo "  cached guide    : $(date -r "$CACHE/guide.md" '+%d %b %H:%M' 2>/dev/null) ($(wc -l < "$CACHE/guide.md" | tr -d ' ') lines)"
@@ -117,6 +120,8 @@ cmd_status() {
 case "${1:-sync}" in
   sync)   cmd_sync ;;
   adopt)  shift; cmd_adopt "$@" ;;
+  link)   shift; run_adopt link "$@" ;;
+  inject) run_adopt inject ;;
   status) cmd_status ;;
-  *) echo "usage: toolbar-skill.sh [sync|adopt <slug>|status]"; exit 1 ;;
+  *) echo "usage: toolbar-skill.sh [sync|adopt <slug>|link [page]|inject|status]"; exit 1 ;;
 esac
