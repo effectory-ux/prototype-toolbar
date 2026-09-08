@@ -1,7 +1,7 @@
 {
   "name": "effectory-ux",
   "description": "Effectory UX skills. Until the team plugin exists this carries only prototype-toolbar; the team plugin keeps this same name, so the /effectory-ux:<skill> commands never change.",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "author": { "name": "Effectory UX" },
   "homepage": "https://github.com/effectory-ux/prototype-toolbar"
 }

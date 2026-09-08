@@ -23,7 +23,7 @@
    layer, dev-server auto-start. Those stay React/Vite features. */
 (function () {
   "use strict";
-  var VERSION = "2.1.0"; /* stamped by release.sh; compared with the published version.json */
+  var VERSION = "2.1.1"; /* stamped by release.sh; compared with the published version.json */
   var C = window.PROTO_TOOLBAR || {};
   var PREFIX = C.prefix || C.key || "proto"; /* storage namespace: prototypes on one origin must not share it */
   var MY_SRC = (document.currentScript && document.currentScript.src) || ""; /* which source loaded this copy */
