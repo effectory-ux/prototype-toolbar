@@ -3,7 +3,7 @@
 // The registry of versions is HOST data (in CYOS: prototype-versions.js at
 // the repo root) and reaches the bar through the PrototypeBar `versions`
 // prop; these helpers only interpret such a list. Each entry:
-//   { key, label, desc, port, path, toolbarKey }
+//   { key, label, desc, port, path, url }
 // See the host registry file for what each field means.
 import { isDevHost } from "./copyEdit.js";
 
@@ -34,7 +34,7 @@ export const versionUrl = (versions, v) => {
         ? loc.pathname.replace(`/${cur.path}/`, `/${v.path}/`)
         : `/${v.path}/`;
       u = new URL(path, loc.origin);
-      u.search = `?${v.toolbarKey}-toolbar-active`;
+      u.search = "?prototype-toolbar"; // the one flag, every prototype
     }
     u.hash = loc.hash;
     return u.toString();
@@ -63,7 +63,7 @@ export const liveShareUrl = (versions, { toolbar = false, page = false } = {}) =
     const cur = currentVersion(versions);
     if (!cur || !cur.url) return null;
     const u = new URL(cur.url);
-    if (toolbar && cur.toolbarKey) u.search = `?${cur.toolbarKey}-toolbar-active`;
+    if (toolbar) u.search = "?prototype-toolbar"; // the one flag, every prototype
     if (page) u.hash = window.location.hash;
     return u.toString();
   } catch (_) { return null; }

@@ -27,7 +27,7 @@ bash "<skill folder>/toolbar-skill.sh" adopt <slug>     # e.g. adopt gl
 ```
 
 It creates `toolbar/` from the published release line, writes `proto-config.js`
-with a fresh key and empty lists (or keeps an existing one), puts the two tags
+with empty lists (or keeps an existing one), puts the two tags
 on **every page that lacks them, the index included**, right after `<body>`
 opens, and prints the prototype's links. Safe to run again. What it adds:
 
@@ -67,12 +67,11 @@ let the page open the dialog when it sees the parameter.
 
 **Several prototypes in one repo** (a docs repo with many pages at the root):
 one shared `toolbar/`, but one config per prototype — `proto-config-<slug>.js`
-with its own `key`, `prefix`, `name`, `live` and `screens` — and each
+with its own `prefix`, `name`, `live` and `screens` — and each
 prototype's pages include their own config file before `toolbar/load.js`.
 
 Look at it locally: serve the root (the project's `serve.py`, or
-`python3 -m http.server 3000`) and open the colleague link that `adopt`/`link`
-printed. Without the flag the page must show nothing of the toolbar.
+`python3 -m http.server 3000`) and open any page with `?prototype-toolbar`. Without the flag the page must show nothing of the toolbar.
 
 ## Wiring a React/Vite prototype
 
@@ -80,8 +79,7 @@ printed. Without the flag the page must show nothing of the toolbar.
 npm install github:effectory-ux/prototype-toolbar#semver:^1.0.0
 ```
 
-- `src/data/proto-config.js` exports `PROTO_TOOLBAR_KEY` (mint once: `<slug>-`
-  plus four random letters or digits), `PROTO_STORAGE_PREFIX`, `USE_CASES`,
+- `src/data/proto-config.js` exports `PROTO_STORAGE_PREFIX`, `USE_CASES`,
   `EDGE_CASES`, `VARIANTS`. Hand the module over whole:
   `import * as PROTO from "./data/proto-config.js"` and
   `<PrototypeBar config={PROTO} onUseCase={goto} edges={edges} onToggleEdge={toggle} />`
@@ -91,7 +89,7 @@ npm install github:effectory-ux/prototype-toolbar#semver:^1.0.0
   `prototype-toolbar/vite-plugin-proto-edits.js` to the plugins. With more
   than one version also `protoVersions(VERSIONS)` and `versions={VERSIONS}`,
   where `VERSIONS` is a `prototype-versions.js` registry at the repo root:
-  `[{ key, label, desc, port, path, url, toolbarKey }]` (README → Versions).
+  `[{ key, label, desc, port, path, url }]` (README → Versions).
   One version: skip both.
 - Start is a Screens row (the first `USE_CASES` entry is the default). The
   older `START_POINTS`/`getStartAt` pair only matters for a host without

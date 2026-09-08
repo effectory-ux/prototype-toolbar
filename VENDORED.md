@@ -17,5 +17,5 @@ the two tags to any new page that lacks them.
 
 Don't edit these files here: the next update overwrites them. Change the
 toolbar in its own repo and release it. What this prototype puts IN the
-toolbar (its key, screens, versions, edge cases) is the host's own
+toolbar (its screens, versions, edge cases) is the host's own
 `proto-config.js`, outside this folder.

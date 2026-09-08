@@ -25,7 +25,8 @@ the same request.
 ## Rules
 
 - Nothing in here may know about any one prototype. Host-specific things
-  (keys, screens, versions, edge cases) live in each host's own config file.
+  (screens, versions, edge cases) live in each host's own config file. The
+  toolbar flag is the same everywhere: `?prototype-toolbar`.
 - **Commits to main change nothing for any prototype.** Only a release does:
   `./toolbar.sh release patch|minor|major` (semver — major = a host must
   change something). Ask before releasing unless the user already said to.

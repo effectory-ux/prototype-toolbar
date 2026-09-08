@@ -15,7 +15,7 @@ right screen edge brings it back.
 This repo knows nothing about any one prototype: in CYOS it is the single
 toolbar every phase imports (phase-2 does so from `phase-2/src/app.jsx` and
 `phase-2/vite.config.js`). Everything
-project-specific — use cases, start points, variants, the toolbar key, the
+project-specific — use cases, start points, variants, the
 Piwik event registry — comes in as props from the host's own config (in CYOS:
 `phase-2/src/data/proto-config.js` and `phase-2/src/data/piwik-events.js`).
 Change this folder and every consumer gets it; nothing in here may import
@@ -23,71 +23,67 @@ from a host app.
 
 ## Who sees it
 
-- **The link decides, everywhere** — localhost included. The toolbar is there
-  only for a URL carrying `?<toolbarKey>-toolbar-active`, where `toolbarKey` is
-  an id the host mints once and passes in as a prop. Every other link — the one
-  a tester or participant is handed — is the plain prototype: no toolbar, no
-  peek tab, no shortcut. What you see always matches what the URL says.
-- A host **without** a key (no config) still gets the bar on dev hosts
-  (localhost, `127.0.0.1`, `.local`, LAN).
+One flag, every prototype: **`?prototype-toolbar`**.
+
+- A URL carrying it shows the bar — anywhere, localhost included, so what you
+  see is what the address says.
+- Every other link, the one a tester or participant is handed, is the plain
+  prototype: no toolbar, no peek tab, no shortcut, and nothing of it is even
+  requested.
+
+It may sit at the **very end** of a link, hash routes included
+(`…/phase-2/#/surveys/s3/questionnaire?prototype-toolbar`): the loader moves it
+into the query before the app reads its route. A stray second `?` is tolerated
+too, so appending it never has to be thought about.
 
 There is no "off" switch: the URL without the flag is already the version
-without the toolbar.
-
-The two copy buttons differ by who you are copying for: the **link** icon takes
-this step exactly as you see it (flag and all — that is how a colleague gets the
-toolbar), **Share** takes the same step with the toolbar stripped out. Rotating
-the key in the host's config invalidates every toolbar link handed out so far.
+without the toolbar. The two copy buttons differ by who you copy for: the
+**link** icon takes this step as you see it, flag and all, **Share** takes the
+same step with the flag stripped.
 
 Inline copy editing is dev-only by an explicit host check, not by a failed
 request: a deployed prototype never shows the Edit button.
 
 ## The link contract — every toolbar, every port
 
-The gating above is not a feature of this React bar; it is the contract for ANY
-prototype that carries a toolbar, including ports of this bar to other stacks
-(e.g. the vanilla-JS port in `question-library-v3`). One prototype must always
-yield two kinds of links without deploying anything twice:
+The gating above is the contract for ANY prototype that carries a toolbar,
+including ports of this bar to other stacks. One prototype must always yield
+two kinds of links without deploying anything twice:
 
-- **Colleague link** — the current URL *with* `?<toolbarKey>-toolbar-active`:
-  whoever opens it gets the toolbar (designers, PMs, developers walking the
-  states).
-- **Tester link** — the same URL *without* the flag: the plain prototype. No
-  toolbar, no peek tab, no keyboard shortcut, no rendered-then-hidden DOM — a
+- **Colleague link** — the current URL plus `?prototype-toolbar`: whoever
+  opens it gets the toolbar (designers, PMs, developers walking the states).
+- **Tester link** — the same URL without it: the plain prototype. No toolbar,
+  no peek tab, no keyboard shortcut, no rendered-then-hidden DOM — a
   participant can never stumble into the tooling.
 
 Rules a port must keep:
 
-1. **The flag decides everywhere**, dev hosts included: the bar exists only
-   when the URL carries it, so a page and its address never disagree. Only a
-   host without a key falls back to "always on dev hosts".
-2. The check gates *rendering*, not visibility: without the flag, none of the
-   bar's DOM, listeners, or shortcuts may be installed.
-3. **Mint the key once per prototype** (an opaque id like `ql-3a7k`), never
-   reuse one across prototypes. Rotating the key invalidates every toolbar
-   link handed out so far — that is the kill switch, so there is no other
-   off switch.
-4. **Carry the flag along**: every navigation the toolbar itself performs
-   (version switch, screen jump, edge-case reload) must preserve the query
-   string, so the bar doesn't vanish mid-walkthrough on a multi-page
-   prototype. The vanilla bar also carries it on the host's own same-origin
-   links (a capture-phase click handler) and exposes `ProtoToolbar.carry(url)`
-   for a host's programmatic navigation (`location.href = ProtoToolbar.carry(url)`).
-5. **Share strips the flag**: the share/copy affordance produces the tester
-   link (URL minus flag) — handing out a clean link must never require
-   editing a URL by hand.
+1. **The flag decides, everywhere** — dev hosts included. The check gates
+   *rendering*, not visibility: without the flag, none of the bar's DOM,
+   listeners or shortcuts may be installed.
+2. **Accept it at the end of the link.** `?prototype-toolbar` appended after a
+   hash route, or after an existing query with a second `?`, must work; move it
+   into the query before the app reads its route.
+3. **Carry it along**: every navigation the toolbar performs (version switch,
+   screen jump, edge-case reload) preserves it, so the bar doesn't vanish
+   mid-walkthrough. `ProtoToolbar.carry(url)` does this for the host's own
+   navigation.
+4. **Share strips it**: the share affordance produces the tester link — handing
+   out a clean link must never require editing a URL by hand.
 
 The reference implementation of the check:
 
 ```js
-const FLAG = `${TOOLBAR_KEY}-toolbar-active`;
-const isDevHost = () =>
-  ["localhost", "127.0.0.1"].includes(location.hostname) ||
-  /\.local$/.test(location.hostname) || /^192\.168\./.test(location.hostname);
-const barActive = () =>
-  TOOLBAR_KEY ? new URLSearchParams(location.search).has(FLAG) : isDevHost();
+const FLAG = "prototype-toolbar";
+const barActive = () => new URLSearchParams(location.search).has(FLAG);
 if (!barActive()) return; // render nothing at all
 ```
+
+Before v2 each prototype minted its own key and the flag was
+`?<key>-toolbar-active`. Those links are dead: v2 accepts only
+`?prototype-toolbar`, which anyone can type from memory. The trade-off is
+deliberate — the flag is a convention, not a secret, so a colleague who knows
+it can open any deployed prototype with the bar.
 
 ## What lives here
 
@@ -191,7 +187,7 @@ from a release line — the CDN-with-local-fallback pattern:
   Every prototype on that origin now loads the bar from your working tree until you open one
   with `?proto-toolbar-src=off`. Or `./toolbar.sh vendor <host>` to copy the
   working tree into a host's `toolbar/` for a real deployed try-out.
-- Without the toolbar flag the loader loads nothing (a host with a key, localhost included): a
+- Without the toolbar flag the loader loads nothing, localhost included: a
   tester's page never even requests the toolbar.
 
 Adopting it in a static prototype is one command in its root, with or without
@@ -201,7 +197,7 @@ the skill:
 curl -fsSL https://effectory-ux.github.io/prototype-toolbar/v1/adopt.sh | bash -s -- <slug>
 ```
 
-It creates `toolbar/`, writes `proto-config.js` with a fresh key, puts the two
+It creates `toolbar/`, writes `proto-config.js`, puts the two
 tags on every page that lacks them and prints the links. Afterwards
 `bash toolbar/adopt.sh link [page]` prints the colleague link and the tester
 link for localhost and the live site, and `bash toolbar/adopt.sh inject` wires
@@ -215,8 +211,7 @@ return the target (a filename relative to the page is fine):
 
 ```js
 window.PROTO_TOOLBAR = {
-  key: "gtma-7c2m",                // the ?<key>-toolbar-active gate (mint one per prototype)
-  prefix: "gtma",                  // localStorage namespace
+  prefix: "gtma",                  // localStorage namespace (one per prototype)
   name: "GTMA",                    // badge text when the page is in no version
   live: "https://effectory-ux.github.io/gtma/",   // powers the Share menu
   versions: [{ key, label, desc, match: /-before-/, go: u => "…-before-….html" }],
@@ -261,7 +256,6 @@ inline copy editing, the Piwik event layer, dev-server auto-start.
 ```jsx
 <PrototypeBar
   storagePrefix="myproto"                 // localStorage namespace
-  toolbarKey="id-mykey"                   // the ?<key>-toolbar-active gate
   useCases={[{ key, label, desc }]}       // onUseCase(key) jumps there
   edgeCases={[{ key, label, desc, on }]}  // edges map + onToggleEdge(key)
   variants={[{ key, label, desc }]}       // varState map + onToggleVariant(key)
@@ -344,14 +338,14 @@ built from the versions registry's `url`, so it is right even from localhost
 and always points at the version you are on rather than at whatever was
 deployed last. By default the link opens at the prototype's start and is
 toolbar-free; "Share this page" makes it open on the screen you are looking
-at, and "Include the toolbar" adds the key for receivers who should get the
-bar. Without a registry `url` the menu falls back to copying the current
+at, and "Include the toolbar" adds `?prototype-toolbar` for receivers who
+should get the bar. Without a registry `url` the menu falls back to copying the current
 address without the flag.
 
 ## Versions: the badge names the prototype and switches between them
 
 Pass `versions` — the host's registry of the prototype's versions, one entry
-per version: `{ key, label, desc, port, path, url, toolbarKey }` (in CYOS the
+per version: `{ key, label, desc, port, path, url }` (in CYOS the
 registry is `prototype-versions.js` at the repo root; the toolbar folder
 itself stays host-agnostic). The bar works out which entry is the page you
 are on FROM THE URL — deployed path segment first, dev port as fallback — so
@@ -389,7 +383,7 @@ the same mechanism as the design-system skill. Changing how prototypes are
 wired is therefore a commit to `guide.md`; the uploaded skill only needs a
 re-upload when `SKILL.md` or the script change, and `sync` says so.
 `./toolbar-skill.sh adopt <slug>` gives a static prototype the toolbar and a
-fresh key in one step.
+fresh config in one step.
 
 **One channel, on purpose.** The team gets this skill as an **Organization
 Skill**: `./toolbar.sh skill` builds the zip, an admin uploads it in Claude.ai,
@@ -435,7 +429,7 @@ Cutting a release is one command: `./toolbar.sh release patch|minor|major`
 to main without a release only moves "latest"; no prototype is affected until
 you release. So: iterate freely on main, release when it is right.
 
-Keep everything host-specific OUT of this repo — keys, screens, versions,
+Keep everything host-specific OUT of this repo — screens, versions,
 edge cases live in each host's own config. Everything in here must stay
 generic.
 

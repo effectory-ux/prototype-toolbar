@@ -46,11 +46,12 @@ Then follow the guide. The one rule that must survive even without it:
 
 ## The link contract (never break it)
 
-A prototype mints **one key** in its config. The URL with `?<key>-toolbar-active`
-shows the bar (colleague link); the same URL without it never even requests the
-toolbar (tester link), localhost included. Every navigation the bar performs
-carries the flag; Share strips it; the page's own navigation uses
-`ProtoToolbar.carry(url)`.
+One flag, every prototype: **`?prototype-toolbar`**. A URL carrying it shows
+the bar (colleague link); the same URL without it never even requests the
+toolbar (tester link), localhost included. It may be appended at the very end
+of any link, hash routes included. Every navigation the bar performs carries
+it; Share strips it; the page's own navigation uses `ProtoToolbar.carry(url)`.
+Links from before v2 (`?<key>-toolbar-active`) are dead — never hand one out.
 
 ## When to wire it, and when not
 
@@ -81,7 +82,7 @@ With an argument, do just that: `link [page]`, `adopt <slug>`, `inject`, `status
 
 ```bash
 bash "<skill folder>/toolbar-skill.sh" sync           # refresh guide, adopt script, README (cache + offline fallback)
-bash "<skill folder>/toolbar-skill.sh" adopt <slug>   # wire a static prototype: toolbar/, config with a fresh key, tags on every page, links
+bash "<skill folder>/toolbar-skill.sh" adopt <slug>   # wire a static prototype: toolbar/, config, tags on every page, links
 bash "<skill folder>/toolbar-skill.sh" link [page]    # colleague link + tester link, localhost (port 3000) and live
 bash "<skill folder>/toolbar-skill.sh" inject         # tags on any page that lacks them
 bash "<skill folder>/toolbar-skill.sh" status         # what is cached, how old, bundle vs repo version

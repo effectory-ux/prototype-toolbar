@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # adopt.sh — give a static prototype the shared prototype toolbar, or print its links.
 #
-#   adopt.sh <slug>          wire it: fetch toolbar/ from the release line, write proto-config.js
-#                            with a fresh key (an existing one is kept), put the two tags on every
-#                            page that lacks them, then print the links. Safe to run again.
+#   adopt.sh <slug>          wire it: fetch toolbar/ from the release line, write proto-config.js,
+#                            put the two tags on every page that lacks them, then print the links.
+#                            Safe to run again.
 #   adopt.sh inject          only the tags: every *.html page that lacks them gets them
 #   adopt.sh link [page]     the colleague link and the tester link for a page (default: the
 #                            prototype's first page), for localhost and for the live site
@@ -19,6 +19,7 @@ LINE="${PROTO_TOOLBAR_LINE:-https://effectory-ux.github.io/prototype-toolbar/v1/
 CONFIG="proto-config.js"
 PORT="${PORT:-3000}"
 
+FLAG="prototype-toolbar"   # the one flag, every prototype — append it to any link
 cfg() { sed -n "s/.*$1: *\"\([^\"]*\)\".*/\1/p" "$CONFIG" 2>/dev/null | head -1; }
 first_page() {  # the prototype's landing page: index.html, else the first page at the root
   if [ -f index.html ]; then echo index.html; else ls *.html 2>/dev/null | head -1; fi
@@ -27,18 +28,18 @@ first_page() {  # the prototype's landing page: index.html, else the first page 
 # ---- links ---------------------------------------------------------------------
 cmd_link() {
   [ -s "$CONFIG" ] || { echo "adopt.sh: no $CONFIG here — this prototype has no toolbar yet. Wire it: adopt.sh <slug>" >&2; exit 1; }
-  local key live page; key="$(cfg key)"; live="$(cfg live)"; page="${1:-$(first_page)}"
-  [ -n "$key" ] || { echo "adopt.sh: $CONFIG has no key: — add one (e.g. \"<slug>-a1b2\")" >&2; exit 1; }
+  local live page; live="$(cfg live)"; page="${1:-$(first_page)}"
   page="${page#./}"; local p="$page"; [ "$p" = index.html ] && p=""
-  echo "Prototype: $(cfg name)   key: $key   page: ${page}"
+  echo "Prototype: $(cfg name)   page: ${page:-index.html}"
   echo
-  echo "Colleague link (with the toolbar):"
-  echo "  local  http://localhost:$PORT/$p?$key-toolbar-active"
-  [ -n "$live" ] && echo "  live   ${live%/}/$p?$key-toolbar-active" || echo "  live   (set live: in $CONFIG to the Pages address)"
+  echo "Colleague link (with the toolbar) — add ?$FLAG to any page:"
+  echo "  local  http://localhost:$PORT/$p?$FLAG"
+  [ -n "$live" ] && echo "  live   ${live%/}/$p?$FLAG" || echo "  live   (set live: in $CONFIG to the Pages address)"
   echo "Tester link (no toolbar, ever):"
   echo "  local  http://localhost:$PORT/$p"
   [ -n "$live" ] && echo "  live   ${live%/}/$p"
   echo
+  echo "?$FLAG works appended at the END of any link, hash routes included."
   echo "Serve locally with: python3 -m http.server $PORT   (or the project's serve.py)"
 }
 
@@ -95,8 +96,7 @@ cmd_adopt() {
   echo "toolbar/ ← prototype toolbar $(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' toolbar/version.json | head -1) (release line v1)"
 
   if [ ! -f "$CONFIG" ]; then
-    local rand remote repo live=""
-    rand="$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n' | cut -c1-4)"   # bounded read: no early-closed pipe under pipefail
+    local remote repo live=""
     remote="$(git config --get remote.origin.url 2>/dev/null || true)"
     repo="$(printf '%s\n' "$remote" | sed -nE 's#\.git$##; s#.*github\.com[:/]([^/]+)/([^/]+)$#\1/\2#p')"
     [ -n "$repo" ] && live="https://${repo%%/*}.github.io/${repo##*/}/"
@@ -107,8 +107,7 @@ cmd_adopt() {
 // (github.com/effectory-ux/prototype-toolbar, cached by the skill as
 // .ds-cache/prototype-toolbar/README.md).
 window.PROTO_TOOLBAR = {
-  key: "${slug}-${rand}",          // the ?<key>-toolbar-active gate — mint once, never reuse
-  prefix: "${slug}",               // localStorage namespace
+  prefix: "${slug}",               // localStorage namespace (one per prototype)
   name: "${slug}",                 // badge text: use the prototype's real name
   live: "${live}",                 // the deployed address, for the Share menu
   versions: [],                    // [{ key, label, desc, match, go }]
@@ -117,7 +116,7 @@ window.PROTO_TOOLBAR = {
   variants: []                     // [{ key, label, desc, on, href }]
 };
 JS
-    echo "wrote $CONFIG with key ${slug}-${rand}${live:+ and live $live}"
+    echo "wrote $CONFIG${live:+ with live $live}"
   else
     echo "$CONFIG exists — kept"
   fi

@@ -15,10 +15,10 @@
 
    The bar compares its own version with the published one and shows an
    Update hint when this folder's copy is behind (refresh it with update.sh).
-   The link decides who gets the bar: a host with a key loads it only for a
-   URL carrying ?<key>-toolbar-active — localhost included — so a tester's
-   page never even requests the toolbar. A host without a key gets it on dev
-   hosts. */
+   The link decides who gets the bar: `?prototype-toolbar` on the URL loads it,
+   anywhere, localhost included — so a tester's page never even requests the
+   toolbar. One flag for every prototype, and it may sit at the very end of the
+   link, hash routes included (it is normalized into the query on arrival). */
 (function () {
   var MAJOR = "1"; /* the release line this copy follows; update.sh keeps it in step */
   var HOSTED = "https://effectory-ux.github.io/prototype-toolbar/v" + MAJOR + "/";
@@ -28,10 +28,29 @@
     return h === "localhost" || h === "127.0.0.1" || h === "0.0.0.0" || h === "[::1]" || /\.local$/.test(h) ||
       /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
   }
+  /* One flag, appended anywhere: `?prototype-toolbar` at the very END of a link
+     works even on a hash-routed page (…#/route?prototype-toolbar), and so does
+     a second `?`. Whatever form it arrives in, it is rewritten once into the
+     query — before the app reads its route, so the app sees a clean hash and
+     the flag survives every hash rewrite the app does. */
+  function normalizeFlag() {
+    try {
+      var href = location.href;
+      if (!/[?&]prototype-toolbar(?:[=&]|$)/.test(href)) return;
+      var stripped = href
+        .replace(/([?&])prototype-toolbar(=[^&#]*)?(?=[&#]|$)/g, "$1")
+        .replace(/([?&])(?=[&#]|$)/g, "");
+      var u = new URL(stripped);
+      u.search = u.search ? u.search + "&prototype-toolbar" : "?prototype-toolbar";
+      var out = u.toString().replace("prototype-toolbar=", "prototype-toolbar");
+      if (out !== href) history.replaceState(null, "", out);
+    } catch (e) {}
+  }
+  normalizeFlag();
   var params;
   try { params = new URLSearchParams(location.search); }
   catch (e) { params = { has: function () { return false; }, get: function () { return null; } }; }
-  if (C.key ? !params.has(C.key + "-toolbar-active") : !isDevHost()) {
+  if (!params.has("prototype-toolbar")) {
     /* A tester's page: the bar is not loaded, but the API a page may call
        exists, answering with the config's defaults — page code needs no `if`. */
     if (!window.ProtoToolbar) window.ProtoToolbar = {

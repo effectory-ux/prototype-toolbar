@@ -143,22 +143,40 @@ export function createDiscovery({ prefix = "proto", routeKey: keyFn = routeKey }
   return api;
 }
 
+// ---- The one flag, appended anywhere ----------------------------------------
+// `?prototype-toolbar` may sit at the very END of a link, hash route included
+// (…#/route?prototype-toolbar), and a second `?` is tolerated. Whatever form it
+// arrives in, it is rewritten once into the query — at import time, so it
+// happens before the app reads its first hash and the flag survives every hash
+// rewrite the app does afterwards.
+(function normalizeFlag() {
+  try {
+    const href = window.location.href;
+    if (!/[?&]prototype-toolbar(?:[=&]|$)/.test(href)) return;
+    const stripped = href
+      .replace(/([?&])prototype-toolbar(=[^&#]*)?(?=[&#]|$)/g, "$1")
+      .replace(/([?&])(?=[&#]|$)/g, "");
+    const u = new URL(stripped);
+    u.search = u.search ? u.search + "&prototype-toolbar" : "?prototype-toolbar";
+    const out = u.toString().replace("prototype-toolbar=", "prototype-toolbar");
+    if (out !== href) window.history.replaceState(null, "", out);
+  } catch (_) {}
+})();
+
 // ---- "Start on this screen" -------------------------------------------------
 // A start point the prototype did not register: a plain route, remembered per
 // prototype (origin + path, so phases and deploys don't share one) and applied
 // before the app reads its first hash. Runs at import time on purpose — that
 // is the only moment early enough — and only when the toolbar is active.
 const startKey = () => "proto.startRoute@" + window.location.origin + window.location.pathname;
-const readStart = () => { try { const v = JSON.parse(localStorage.getItem(startKey()) || "null"); return v && typeof v === "object" ? v : (v ? { route: String(v), key: "" } : null); } catch (_) { return null; } };
+const readStart = () => { try { const v = JSON.parse(localStorage.getItem(startKey()) || "null"); return v && typeof v === "object" ? v : (v ? { route: String(v) } : null); } catch (_) { return null; } };
 export const getStartRoute = () => { const v = readStart(); return v ? v.route : null; };
-// `key` is the host's toolbar key: the start applies only when the bar would
-// show (flagged URL for a keyed host, any dev host otherwise).
-export const setStartRoute = (route, key = "") => { try { route ? localStorage.setItem(startKey(), JSON.stringify({ route, key })) : localStorage.removeItem(startKey()); } catch (_) {} };
+export const setStartRoute = (route) => { try { route ? localStorage.setItem(startKey(), JSON.stringify({ route })) : localStorage.removeItem(startKey()); } catch (_) {} };
 (function applyStartRoute() {
   try {
     const v = readStart();
     if (!v || !v.route || window.location.hash || !v.route.startsWith("#")) return;
-    const shown = v.key ? new URLSearchParams(window.location.search).has(v.key + "-toolbar-active") : isDevHost();
+    const shown = new URLSearchParams(window.location.search).has("prototype-toolbar");
     if (shown) window.location.replace(window.location.pathname + window.location.search + v.route);
   } catch (_) {}
 })();

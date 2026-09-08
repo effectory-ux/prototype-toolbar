@@ -11,11 +11,13 @@
      <script src="proto-config.js"></script>          (the host's)
      <script src="toolbar/load.js"></script>          (writes in the stylesheet and this file)
 
-   Who sees it — the link decides, everywhere: a host with a key shows the bar
-   only for a URL carrying `?<key>-toolbar-active`, localhost included; a host
-   without a key gets it on dev hosts. Without the flag nothing is installed —
-   no DOM, no listeners, no shortcut — so a tester can never stumble into it.
-   Every navigation the bar performs carries the flag along; Share strips it.
+   Who sees it — the link decides, everywhere: `?prototype-toolbar` on the URL
+   shows the bar, anywhere, localhost included, so what you see is what the
+   address says. One flag for every prototype: easy to type, easy to pass on,
+   and it may sit at the very end of the link (load.js normalizes it into the
+   query, hash routes included). Without it nothing is installed — no DOM, no
+   listeners, no shortcut — so a tester can never stumble into it. Every
+   navigation the bar performs carries the flag along; Share strips it.
 
    Not here (they need a dev server): inline copy editing, the Piwik event
    layer, dev-server auto-start. Those stay React/Vite features. */
@@ -23,23 +25,23 @@
   "use strict";
   var VERSION = "1.3.0"; /* stamped by release.sh; compared with the published version.json */
   var C = window.PROTO_TOOLBAR || {};
-  var KEY = C.key || "";
   var PREFIX = C.prefix || C.key || "proto"; /* storage namespace: prototypes on one origin must not share it */
   var MY_SRC = (document.currentScript && document.currentScript.src) || ""; /* which source loaded this copy */
-  var FLAG = KEY + "-toolbar-active";
+  var FLAG = "prototype-toolbar";                                  /* the one flag, every prototype */
 
   function isDevHost() {
     var h = location.hostname;
     return h === "localhost" || h === "127.0.0.1" || h === "0.0.0.0" || h === "[::1]" || /\.local$/.test(h) ||
       /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
   }
-  /* The link decides, everywhere: a host that minted a key shows the bar only
-     for a URL carrying the flag — localhost included, so what you see is what
-     the URL says. A host without a key (no config) still gets it on dev hosts. */
-  function barActive() {
-    try { return KEY ? new URLSearchParams(location.search).has(FLAG) : isDevHost(); }
+  /* The link decides, everywhere — localhost included, so what you see is what
+     the URL says. `?prototype-toolbar` is the whole rule (load.js has already
+     moved it into the query if it arrived at the end of a hash link). */
+  function flagged() {
+    try { return new URLSearchParams(location.search).has(FLAG); }
     catch (e) { return false; }
   }
+  function barActive() { return flagged(); }
 
   /* ---- storage: one namespace per prototype ------------------------------ */
   var store = {
@@ -66,7 +68,8 @@
   function carry(href) {
     try {
       var u = new URL(href, location.href);
-      if (KEY && new URLSearchParams(location.search).has(FLAG) && u.origin === location.origin) {
+      /* always pass on the current flag, so an old link spreads as the new one */
+      if (flagged() && u.origin === location.origin) {
         u.searchParams.set(FLAG, "");
         return u.toString().replace(FLAG + "=", FLAG);
       }
@@ -105,7 +108,7 @@
     try {
       var u = new URL(C.live);
       if (opts.page) { u.pathname = u.pathname.replace(/\/?$/, "/") + relPath(); u.search = new URL(plainLink()).search; u.hash = location.hash; }
-      if (opts.toolbar && KEY) u.search = (u.search ? u.search + "&" : "?") + FLAG;
+      if (opts.toolbar) u.search = (u.search ? u.search + "&" : "?") + FLAG;
       return u.toString();
     } catch (e) { return null; }
   }
@@ -138,7 +141,7 @@
   };
   /* The host's own same-origin links carry the flag too (capture phase, before
      any router reads the href), so a walkthrough never loses the bar. */
-  if (api.active && KEY) {
+  if (api.active) {
     document.addEventListener("click", function (e) {
       var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
       if (!a || a.closest(".pbar") || (a.target && a.target !== "_self")) return;

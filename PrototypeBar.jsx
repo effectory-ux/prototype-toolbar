@@ -21,22 +21,22 @@ import { EventLayer } from "./EventLayer.jsx";
 import { createDiscovery, getStartRoute, setStartRoute } from "./discover.js";
 import "./prototype-bar.css";
 
-// Who gets the toolbar: the link decides, everywhere. A host that minted a
-// key shows the bar only for a URL carrying `?<toolbarKey>-toolbar-active` —
-// localhost included, so what you see is what the URL says. A host without a
-// key still gets it on dev hosts. There is deliberately no "off" switch: a
+// Who gets the toolbar: the link decides, everywhere. `?prototype-toolbar` on
+// the URL shows the bar, anywhere, localhost included, so what you see is what
+// the address says — one flag for every prototype, and it may sit at the very
+// end of the link (discover.js normalizes it into the query at import time,
+// before the app reads its route). There is deliberately no "off" switch: a
 // URL without the flag IS the version without the toolbar.
-const flagOf = (key) => `${key}-toolbar-active`;
-const barActive = (key) => {
-  try {
-    return key ? new URLSearchParams(window.location.search).has(flagOf(key)) : isDevHost();
-  } catch (_) { return false; }
+export const FLAG = "prototype-toolbar";
+const barActive = () => {
+  try { return new URLSearchParams(window.location.search).has(FLAG); }
+  catch (_) { return false; }
 };
 // The current step WITHOUT the toolbar flag: what you hand to a tester.
-const plainLink = (key) => {
+const plainLink = () => {
   try {
     const u = new URL(window.location.href);
-    u.searchParams.delete(flagOf(key));
+    u.searchParams.delete(FLAG);
     return u.toString().replace(/\?(?=#|$)/, "");
   } catch (_) { return window.location.href; }
 };
@@ -58,7 +58,7 @@ const saveHidden = (prefix, v) => { try { localStorage.setItem(hideKey(prefix), 
 //   variants    [{key, label, desc}]   — design variants under exploration
 //                                        (varState map + onToggleVariant(key))
 //   storagePrefix                      — localStorage namespace, e.g. "cyos"
-//   versions    [{key, label, desc, port, path, url, toolbarKey}]
+//   versions    [{key, label, desc, port, path, url}]
 //               — this prototype's versions (the host's registry file; see
 //               versions.js). The bar works out which one it is FROM THE URL,
 //               shows that name on its badge (the collapsed tab stays
@@ -72,8 +72,8 @@ const saveHidden = (prefix, v) => { try { localStorage.setItem(hideKey(prefix), 
 //               (`import * as PROTO from "./data/proto-config.js"` →
 //               `config={PROTO}`): the bar reads the conventional exports
 //               (USE_CASES, EDGE_CASES, START_POINTS, VARIANTS, PIWIK_EVENTS,
-//               PIWIK_FUNNELS, PROTO_STORAGE_PREFIX, PROTO_TOOLBAR_KEY, or
-//               their camelCase equivalents) and renders every menu that has
+//               PIWIK_FUNNELS, PROTO_STORAGE_PREFIX, or their camelCase
+//               equivalents) and renders every menu that has
 //               entries — declare a setting there and it shows up, no wiring.
 //               Explicit props win over config.
 //   routeKey    optional (route) => key: how routes collapse into screens for
@@ -94,13 +94,12 @@ export function PrototypeBar(props) {
   const events = props.events ?? c.events ?? c.PIWIK_EVENTS ?? {};
   const funnels = props.funnels ?? c.funnels ?? c.PIWIK_FUNNELS ?? {};
   const storagePrefix = props.storagePrefix ?? c.storagePrefix ?? c.PROTO_STORAGE_PREFIX ?? "proto";
-  const toolbarKey = props.toolbarKey ?? c.toolbarKey ?? c.PROTO_TOOLBAR_KEY ?? "";
   const versions = props.versions ?? c.versions ?? c.VERSIONS ?? [];
   const { edges = {}, varState = {}, onUseCase = () => {}, onToggleEdge = () => {}, onToggleVariant = () => {} } = props;
   const version = currentVersion(versions);
   // Without the flag (or off a dev host) the bar installs NOTHING: no DOM, no
   // listeners, no shortcut, no discovery. Every effect below checks this.
-  const active = barActive(toolbarKey);
+  const active = barActive();
   // Discovery: one instance per bar, booted once; re-render when it learns.
   const discRef = useRef(null);
   if (!discRef.current) discRef.current = createDiscovery({ prefix: storagePrefix, routeKey: props.routeKey });
@@ -112,7 +111,7 @@ export function PrototypeBar(props) {
   const startHere = () => {
     const here = disc.current();
     const next = startRoute === here ? null : here;
-    setStartRoute(next, toolbarKey); setStartRouteState(next);
+    setStartRoute(next); setStartRouteState(next);
     // A route start replaces the registered start point (the app's own start
     // logic stays out of the way), and vice versa.
     if (next && startPoints[0]) { setStart(startPoints[0].key); setStartAt(storagePrefix, startPoints[0].key); }
@@ -217,7 +216,7 @@ export function PrototypeBar(props) {
   }, [menu]); // eslint-disable-line
   const copyShare = () => {
     try {
-      navigator.clipboard.writeText(shareUrl || plainLink(toolbarKey));
+      navigator.clipboard.writeText(shareUrl || plainLink());
       setShared(true); setTimeout(() => setShared(false), 1600);
     } catch (_) {}
   };
@@ -238,7 +237,7 @@ export function PrototypeBar(props) {
   const pickStart = (key) => { setStart(key); setStartAt(storagePrefix, key); setStartRoute(null); setStartRouteState(null); setMenu(null); };
   /* Start column in the Screens menu: one switch at a time */
   const startOn = (key) => { setStart(key); setStartAt(storagePrefix, key); setStartRoute(null); setStartRouteState(null); };
-  const startOnRoute = (route) => { setStartRoute(route, toolbarKey); setStartRouteState(route); };
+  const startOnRoute = (route) => { setStartRoute(route); setStartRouteState(route); };
   const resetStart = () => { setStart(null); setStartAt(storagePrefix, ""); setStartRoute(null); setStartRouteState(null); };
   /* the default start is the first screen (or the one marked default: true); its switch is on until another is chosen */
   const defaultStartKey = (useCases.find(u => u.default) || useCases[0] || {}).key;
