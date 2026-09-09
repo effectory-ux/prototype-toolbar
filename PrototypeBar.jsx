@@ -317,7 +317,7 @@ export function PrototypeBar(props) {
         <div className="pbar-menu-wrap">
           <button className={"pbar-btn" + (menu === "cases" ? " is-open" : "")} data-tip="Screens"
             onClick={() => setMenu(m => (m === "cases" ? null : "cases"))}>
-            <Ic name="clipboard-note" size={14} /><span className="pbar-lbl">Screens</span>
+            <Ic name="layout" size={14} /><span className="pbar-lbl">Screens</span>
             {isDevHost() && unregistered.length > 0 && <span className="pbar-count is-learn" title="Seen here, not in the Screens list">{unregistered.length}</span>}
           </button>
           {menu === "cases" && (
@@ -492,10 +492,10 @@ export function PrototypeBar(props) {
       )}
 
       <div className="pbar-menu-wrap">
-        <button className={"pbar-icon pbar-tt is-right" + (menu === "share" ? " is-open" : "")}
+        <button className={"pbar-btn pbar-tt is-right" + (menu === "share" ? " is-open" : "")}
           onClick={() => setMenu(m => (m === "share" ? null : "share"))}
           data-tip="Share" aria-label="Share">
-          <Ic name="share" size={14} />
+          <Ic name="share" size={14} /><span className="pbar-lbl">Share</span>
         </button>
         {menu === "share" && (
           <>
@@ -523,15 +523,15 @@ export function PrototypeBar(props) {
                     <span className="pbar-switch" aria-hidden="true" />
                     <span className="pbar-item-desc">The link carries ?prototype-toolbar, so whoever opens it gets this bar too.</span>
                   </button>
-                  <button className="pbar-item" onClick={copyShare}>
-                    <span className="pbar-item-label">{shared ? "Copied" : "Copy live link"}</span>
+                  <button className="pbar-item is-primary" onClick={copyShare}>
+                    <span className="pbar-item-label">{shared ? "Copied" : "Copy link"}</span>
                     {shared && <Ic name="check" size={14} />}
                   </button>
                 </>
               ) : (
                 <>
                   <div className="pbar-menu-note">No live address is set up for this prototype. This copies the current address without the toolbar.</div>
-                  <button className="pbar-item" onClick={copyShare}>
+                  <button className="pbar-item is-primary" onClick={copyShare}>
                     <span className="pbar-item-label">{shared ? "Copied" : "Copy link"}</span>
                     {shared && <Ic name="check" size={14} />}
                   </button>

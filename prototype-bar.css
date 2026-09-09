@@ -247,3 +247,10 @@ a.pbar-row-main:hover, button.pbar-row-main:hover { background: #2a2f39; }
    Screens button (dev only) and a routes list in the menu. */
 .pbar-count.is-learn { background: #f5c264; color: #14161a; margin-left: 2px; }
 .pbar-mono { font-family: 'Liberation Mono', ui-monospace, monospace; font-size: 10.5px; color: #9aa3b2; overflow-wrap: anywhere; }
+
+/* ---- The one action in a menu (the copy button in Share) --------------------
+   A filled row, so it reads as the thing to press rather than another setting. */
+.pbar-item.is-primary { justify-content: center; margin-top: 5px; background: #7ad3c8; color: #14161a; }
+.pbar-item.is-primary:hover { background: #93ded5; }
+.pbar-item.is-primary .pbar-item-label { font-weight: 700; }
+.pbar-item.is-primary i { margin-left: 6px; color: #14161a; }
