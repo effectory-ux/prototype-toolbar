@@ -39,8 +39,7 @@ not when you reload the page you are working on, and a jump from the Screens
 menu itself always wins; **Edge cases** and **Variants** flip states; the
 **Figma** button opens the linked file; **Share**
 gives the tester link, or the colleague link if you toggle the toolbar in.
-React prototypes also get **Edit** (inline copy editing, dev only) and
-**Events** (the Piwik spec drawn over the live UI). Collapse with Ctrl+` or the
+Collapse with Ctrl+` or the
 button on the right; the tab on the right screen edge brings it back.
 
 Links from before v2 (`?<key>-toolbar-active`) are dead. The flag is a
@@ -77,7 +76,7 @@ import { PrototypeBar } from "prototype-toolbar/PrototypeBar.jsx";
 </div>
 ```
 
-Add `protoEdits()` from `prototype-toolbar/vite-plugin-proto-edits.js` to the
+Add `protoScreens()` from `prototype-toolbar/vite-plugin-proto-screens.js` to the
 Vite plugins; with more than one version also `protoVersions(VERSIONS)`.
 
 Or just ask Claude: the `prototype-toolbar` skill does either flavour.
@@ -130,7 +129,7 @@ The page reads its settings back through `window.ProtoToolbar`: `edge(key)`,
 with the config's defaults, so page code needs no `if`.
 
 **React** — the config module exports `PROTO_STORAGE_PREFIX`, `USE_CASES`,
-`EDGE_CASES`, `START_POINTS`, `VARIANTS`, `PIWIK_EVENTS`, `PIWIK_FUNNELS`
+`EDGE_CASES`, `START_POINTS`, `VARIANTS`
 (camelCase twins work too); handlers stay props. `getStartAt(prefix, fallback)`
 reads the chosen start point. The versions registry is a host file at the repo
 root: `[{ key, label, desc, port, path, url }]` — `port` for local switching,
@@ -160,8 +159,8 @@ means a host has to change something.
   also compares versions and shows the Update chip.
 - **Two flavours, one stylesheet.** `PrototypeBar.jsx` (React) and
   `prototype-bar.js` (vanilla) share `prototype-bar.css` and the link rule.
-  Copy editing and the event layer are React-only: they need the dev server,
-  which the `protoEdits` plugin provides (it also stores discovered screens).
+  Screen discovery needs the dev server, which the `protoScreens` plugin
+  provides; that makes the learned screen list a React/Vite-only feature.
 - **Nothing here knows any prototype.** Everything host-specific lives in the
   host's own config. The bar sits at `z-index: 10000` so nothing covers it.
 - **The skill.** `skills/prototype-toolbar/` is a Claude skill (and this repo a

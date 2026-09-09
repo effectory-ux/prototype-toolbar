@@ -15,9 +15,8 @@
 // their tooltips.
 import { useState, useEffect, useRef } from "react";
 import { Ic } from "./icons.jsx";
-import { initCopyEdits, enableEdit, disableEdit, discardEdits, editCount, undoEdit, redoEdit, canUndo, canRedo, isDevHost } from "./copyEdit.js";
 import { currentVersion, versionUrl, versionAvailable, ensureVersionServer, liveShareUrl, versionFreshness } from "./versions.js";
-import { EventLayer } from "./EventLayer.jsx";
+import { isDevHost } from "./host.js";
 import { createDiscovery, getStartRoute, setStartRoute } from "./discover.js";
 import "./prototype-bar.css";
 
@@ -43,7 +42,6 @@ const plainLink = () => {
 
 const startKey = (prefix) => prefix + ".startAt";
 const hideKey = (prefix) => prefix + ".barHidden";
-const eventsKey = (prefix) => prefix + ".eventsOn";
 export const getStartAt = (prefix, fallback) => {
   try { return localStorage.getItem(startKey(prefix)) || fallback; } catch (_) { return fallback; }
 };
@@ -73,8 +71,8 @@ const saveHidden = (prefix, v) => { try { localStorage.setItem(hideKey(prefix), 
 //   config      — OR hand over the host's whole proto-config module
 //               (`import * as PROTO from "./data/proto-config.js"` →
 //               `config={PROTO}`): the bar reads the conventional exports
-//               (USE_CASES, EDGE_CASES, START_POINTS, VARIANTS, PIWIK_EVENTS,
-//               PIWIK_FUNNELS, PROTO_STORAGE_PREFIX, or their camelCase
+//               (USE_CASES, EDGE_CASES, START_POINTS, VARIANTS,
+//               PROTO_STORAGE_PREFIX, or their camelCase
 //               equivalents) and renders every menu that has
 //               entries — declare a setting there and it shows up, no wiring.
 //               Explicit props win over config.
@@ -93,8 +91,6 @@ export function PrototypeBar(props) {
   const edgeCases = props.edgeCases ?? c.edgeCases ?? c.EDGE_CASES ?? [];
   const startPoints = props.startPoints ?? c.startPoints ?? c.START_POINTS ?? [];
   const variants = props.variants ?? c.variants ?? c.VARIANTS ?? [];
-  const events = props.events ?? c.events ?? c.PIWIK_EVENTS ?? {};
-  const funnels = props.funnels ?? c.funnels ?? c.PIWIK_FUNNELS ?? {};
   const storagePrefix = props.storagePrefix ?? c.storagePrefix ?? c.PROTO_STORAGE_PREFIX ?? "proto";
   const versions = props.versions ?? c.versions ?? c.VERSIONS ?? [];
   const { edges = {}, varState = {}, onUseCase = () => {}, onToggleEdge = () => {}, onToggleVariant = () => {} } = props;
@@ -136,33 +132,6 @@ export function PrototypeBar(props) {
   const [menu, setMenu] = useState(null); // "cases" | "start" | "edges" | null
   const [start, setStart] = useState(() => getStartAt(storagePrefix, startPoints[0] && startPoints[0].key));
   const [shared, setShared] = useState(false);
-  // The Piwik spec layer: pins on tracked elements plus a fired-events log.
-  // A mode you leave on while walking a developer through the tracking, so
-  // it persists like the start point does.
-  const [eventsOn, setEventsOn] = useState(() => {
-    try { return localStorage.getItem(eventsKey(storagePrefix)) === "1"; } catch (_) { return false; }
-  });
-  const toggleEvents = () => setEventsOn(v => {
-    try { localStorage.setItem(eventsKey(storagePrefix), v ? "0" : "1"); } catch (_) {}
-    return !v;
-  });
-  const hasEvents = Object.keys(events).length > 0;
-  const layer = hasEvents && eventsOn ? <EventLayer events={events} funnels={funnels} /> : null;
-  // Inline copy editing (copyEdit.js): available only while the dev server
-  // runs — the deployed prototype still APPLIES saved edits, read-only.
-  const [canEdit, setCanEdit] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [saveState, setSaveState] = useState("clean"); // clean | saving | saved | error
-  const [, setTick] = useState(0); // re-render on undo/redo stack changes
-  useEffect(() => { initCopyEdits(setSaveState, () => setTick(t => t + 1)).then(setCanEdit); }, []);
-  const toggleEdit = () => {
-    if (editing) { disableEdit(); setEditing(false); }
-    else { enableEdit(); setEditing(true); }
-  };
-  const discard = () => {
-    if (window.confirm("Discard all copy edits and restore the original wording?")) discardEdits();
-  };
-
   // The bar is a real row above the prototype, but a dialog overlay is fixed to
   // the viewport and would slide underneath it. Publishing the bar's height as
   // a CSS variable lets the host offset its overlays by exactly that much.
@@ -262,20 +231,15 @@ export function PrototypeBar(props) {
 
   if (hidden) {
     return (
-      <>
-        {layer}
-        <button className="pbar-peek" onClick={() => { setHide(false); saveHidden(storagePrefix, false); }}
-          title="Show toolbar (Ctrl+`)">
-          <Ic name="sliders" size={12} />
-          <span className="pbar-peek-lbl">Toolbar</span>
-        </button>
-      </>
+      <button className="pbar-peek" onClick={() => { setHide(false); saveHidden(storagePrefix, false); }}
+        title="Show toolbar (Ctrl+`)">
+        <Ic name="sliders" size={12} />
+        <span className="pbar-peek-lbl">Toolbar</span>
+      </button>
     );
   }
 
   return (
-    <>
-    {layer}
     <div className="pbar" ref={barRef}>
       {version && versions.length > 1 ? (
         <div className="pbar-menu-wrap">
@@ -465,45 +429,6 @@ export function PrototypeBar(props) {
 
       <span className="pbar-spacer" aria-hidden="true" />
 
-      {canEdit && (
-        <>
-          {editing && (
-            <>
-              <button className={"pbar-icon pbar-tt is-right" + (canUndo() ? "" : " is-disabled")}
-                onClick={undoEdit} disabled={!canUndo()} data-tip="Undo (Ctrl+Z)" aria-label="Undo text edit">
-                <Ic name="undo" size={14} />
-              </button>
-              <button className={"pbar-icon pbar-tt is-right" + (canRedo() ? "" : " is-disabled")}
-                onClick={redoEdit} disabled={!canRedo()} data-tip="Redo (Ctrl+Shift+Z)" aria-label="Redo text edit">
-                <Ic name="undo" size={14} flip />
-              </button>
-              <button className={"pbar-icon pbar-tt is-right" + (editCount() > 0 ? "" : " is-disabled")}
-                onClick={discard} disabled={editCount() === 0} data-tip="Delete all text changes" aria-label="Delete all text changes">
-                <Ic name="trash" size={14} />
-              </button>
-            </>
-          )}
-          <button className={"pbar-btn pbar-tt is-right" + (editing ? " is-editing" : "") + (saveState === "error" ? " is-error" : "")}
-            data-tip={saveState === "error" ? "Not saved. Check that the dev server runs with the proto-edits plugin." : editing ? "Save and stop editing" : "Edit text inline"}
-            onClick={toggleEdit}>
-            <Ic name={editing ? "check" : "edit"} size={14} />
-            <span className="pbar-lbl">{editing ? "Save" : "Edit"}</span>
-          </button>
-          <span className="pbar-sep" aria-hidden="true" />
-        </>
-      )}
-
-      {hasEvents && (
-        <>
-          <button className={"pbar-btn pbar-tt is-right" + (eventsOn ? " is-editing" : "")}
-            data-tip={eventsOn ? "Hide Piwik events" : "Show Piwik events"} onClick={toggleEvents}>
-            <Ic name="pulse" size={14} />
-            <span className="pbar-lbl">Events</span>
-          </button>
-          <span className="pbar-sep" aria-hidden="true" />
-        </>
-      )}
-
       <div className="pbar-menu-wrap">
         <button className={"pbar-icon pbar-tt is-right" + (menu === "figma" ? " is-open" : "")}
           onClick={() => setMenu(m => (m === "figma" ? null : "figma"))}
@@ -585,11 +510,10 @@ export function PrototypeBar(props) {
         )}
       </div>
       <button className="pbar-icon pbar-tt is-right"
-        onClick={() => { if (editing) { disableEdit(); setEditing(false); } setHide(true); saveHidden(storagePrefix, true); }}
+        onClick={() => { setHide(true); saveHidden(storagePrefix, true); }}
         data-tip="Collapse toolbar (Ctrl+`)" aria-label="Collapse toolbar">
         <Ic name="collapse-right" size={14} />
       </button>
     </div>
-    </>
   );
 }

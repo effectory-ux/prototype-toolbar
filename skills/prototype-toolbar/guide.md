@@ -124,7 +124,7 @@ Look at it locally: serve the root (the project's `serve.py`, or
 ## Wiring a React/Vite prototype
 
 ```bash
-npm install github:effectory-ux/prototype-toolbar#semver:^1.0.0
+npm install github:effectory-ux/prototype-toolbar#semver:^3.0.0
 ```
 
 - `src/data/proto-config.js` exports `PROTO_STORAGE_PREFIX`, `USE_CASES`,
@@ -133,8 +133,8 @@ npm install github:effectory-ux/prototype-toolbar#semver:^1.0.0
   `<PrototypeBar config={PROTO} onUseCase={goto} edges={edges} onToggleEdge={toggle} />`
   inside `<div className="proto-shell">…</div>`. Handlers stay props: they are
   app state.
-- `vite.config.js`: add `protoEdits()` from
-  `prototype-toolbar/vite-plugin-proto-edits.js` to the plugins. With more
+- `vite.config.js`: add `protoScreens()` from
+  `prototype-toolbar/vite-plugin-proto-screens.js` to the plugins. With more
   than one version also `protoVersions(VERSIONS)` and `versions={VERSIONS}`,
   where `VERSIONS` is a `prototype-versions.js` registry at the repo root:
   `[{ key, label, desc, port, path, url }]` (README → Versions).

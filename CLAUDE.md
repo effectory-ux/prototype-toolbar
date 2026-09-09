@@ -4,7 +4,7 @@ This repo is the **single source** of the prototype toolbar every Effectory UX
 prototype shares. It is **published, not copied**: static prototypes load the
 runtime from this repo's GitHub Pages site (release line `v1/`) through a small
 vendored `toolbar/load.js`; React/Vite prototypes (CYOS) install this repo as
-an npm dependency pinned to `#semver:^1.0.0`. Two flavors ship from the same
+an npm dependency pinned to `#semver:^3.0.0`. Two flavors ship from the same
 files — `PrototypeBar.jsx` (React) and `prototype-bar.js` (vanilla) — sharing
 `prototype-bar.css` and the link contract in README.md. Keep both flavors in
 step when you change behaviour or copy.

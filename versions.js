@@ -5,7 +5,7 @@
 // prop; these helpers only interpret such a list. Each entry:
 //   { key, label, desc, port, path, url }
 // See the host registry file for what each field means.
-import { isDevHost } from "./copyEdit.js";
+import { isDevHost } from "./host.js";
 
 // Which registry entry is the page you are on: the deployed path segment
 // first, the dev port as fallback — derived from the URL, so versions can

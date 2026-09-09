@@ -19,8 +19,8 @@
    listeners, no shortcut — so a tester can never stumble into it. Every
    navigation the bar performs carries the flag along; Share strips it.
 
-   Not here (they need a dev server): inline copy editing, the Piwik event
-   layer, dev-server auto-start. Those stay React/Vite features. */
+   Not here (it needs a dev server): auto-starting a sibling version's dev
+   server. That stays a React/Vite feature. */
 (function () {
   "use strict";
   var VERSION = "2.4.0"; /* stamped by release.sh; compared with the published version.json */

@@ -22,7 +22,7 @@
 // protoEdits vite plugin serves /__proto/discovered), so it is committed with
 // the prototype and the deployed bar shows it too. Nothing here is
 // prototype-specific.
-import { isDevHost } from "./copyEdit.js";
+import { isDevHost } from "./host.js";
 
 const ENDPOINT = "/__proto/discovered";
 const STATIC_FILE = "proto-discovered.json";

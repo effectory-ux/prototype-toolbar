@@ -1,7 +1,7 @@
 {
   "name": "prototype-toolbar",
   "version": "2.4.0",
-  "description": "The prototype toolbar Effectory UX prototypes share: use cases, edge cases, variants, start points, inline copy editing, Piwik event specs, version switching. Static pages load it from GitHub Pages via load.js; React/Vite prototypes install this package from GitHub.",
+  "description": "The prototype toolbar Effectory UX prototypes share: screens, edge cases, variants, start points, version switching. Static pages load it from GitHub Pages via load.js; React/Vite prototypes install this package from GitHub.",
   "type": "module",
   "private": true,
   "repository": "github:effectory-ux/prototype-toolbar",
@@ -16,17 +16,16 @@
   },
   "files": [
     "PrototypeBar.jsx",
-    "EventLayer.jsx",
     "icons.jsx",
-    "copyEdit.js",
     "discover.js",
     "versions.js",
     "prototype-bar.css",
     "prototype-bar.js",
     "load.js",
-    "vite-plugin-proto-edits.js",
     "vite-plugin-proto-versions.js",
     "check.js",
-    "README.md"
+    "README.md",
+    "host.js",
+    "vite-plugin-proto-screens.js"
   ]
 }
