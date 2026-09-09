@@ -55,7 +55,7 @@ a.pbar-item { text-decoration: none; }
 @media (prefers-reduced-motion: reduce) { .pbar-item.is-busy .pbar-item-desc { animation: none; } }
 .pbar-btn, .pbar-icon { display: inline-flex; align-items: center; gap: 5px; flex: none;
   padding: 5px 9px; border: none; border-radius: 6px; background: transparent; color: #e7e9ec;
-  font: inherit; cursor: pointer; }
+  font: inherit; cursor: pointer; text-decoration: none; }
 .pbar-btn:hover, .pbar-icon:hover { background: #2a2f39; }
 .pbar-btn.is-open { background: #343b47; }
 .pbar-btn i, .pbar-icon i { display: flex; }

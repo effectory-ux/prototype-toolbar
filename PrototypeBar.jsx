@@ -430,30 +430,32 @@ export function PrototypeBar(props) {
       <span className="pbar-spacer" aria-hidden="true" />
 
       <div className="pbar-menu-wrap">
-        <button className={"pbar-icon pbar-tt is-right" + (menu === "figma" ? " is-open" : "")}
-          onClick={() => setMenu(m => (m === "figma" ? null : "figma"))}
-          data-tip="Figma file" aria-label="Figma file">
-          <Ic name="figma" size={14} />
-        </button>
-        {menu === "figma" && (
+        {/* With a file linked the icon IS the link: one press opens Figma, and
+            being a real anchor it also middle-clicks and cmd-clicks like one.
+            The menu is what you get only when there is nothing to open — then
+            it explains how to add it. */}
+        {figmaLink ? (
+          <a className="pbar-icon pbar-tt is-right" href={figmaLink} target="_blank" rel="noopener noreferrer"
+            data-tip="Open in Figma" aria-label="Open in Figma">
+            <Ic name="figma" size={14} />
+          </a>
+        ) : (
+          <button className={"pbar-icon pbar-tt is-right" + (menu === "figma" ? " is-open" : "")}
+            onClick={() => setMenu(m => (m === "figma" ? null : "figma"))}
+            data-tip="Figma file" aria-label="Figma file">
+            <Ic name="figma" size={14} />
+          </button>
+        )}
+        {menu === "figma" && !figmaLink && (
           <>
             <div className="pbar-scrim" onMouseDown={() => setMenu(null)} />
             <div className="pbar-menu is-right">
               <div className="pbar-menu-head">Figma</div>
-              {figmaLink ? (
-                <>
-                  <div className="pbar-share-url">{figmaLink}</div>
-                  <a className="pbar-item is-primary" href={figmaLink} target="_blank" rel="noopener noreferrer">
-                    <span className="pbar-item-label">Open in Figma</span>
-                  </a>
-                </>
-              ) : (
-                <div className="pbar-menu-note">
-                  No Figma file linked yet. Ask Claude in this prototype’s folder — “add the Figma
-                  link &lt;url&gt; to the toolbar” — and it lands in the config, so everyone who opens
-                  this bar sees it.
-                </div>
-              )}
+              <div className="pbar-menu-note">
+                No Figma file linked yet. Ask Claude in this prototype’s folder — “add the Figma
+                link &lt;url&gt; to the toolbar” — and it lands in the config, so everyone who opens
+                this bar sees it.
+              </div>
             </div>
           </>
         )}

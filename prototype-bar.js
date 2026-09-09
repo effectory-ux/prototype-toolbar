@@ -468,14 +468,9 @@
     },
     figma: {
       html: function () {
-        var link = api.figma();
-        if (link) {
-          return '<div class="pbar-menu-head">Figma</div>' +
-            '<div class="pbar-share-url">' + esc(link) + "</div>" +
-            '<a class="pbar-item is-primary" href="' + esc(link) + '" target="_blank" rel="noopener">' +
-            '<span class="pbar-item-label">Open in Figma</span></a>';
-        }
-        /* Nothing to type here on purpose: a page served from Pages cannot write
+        /* Only reached with no link: a linked file turns the icon itself into
+           the anchor above, so there is no menu to open.
+           Nothing to type here on purpose: a page served from Pages cannot write
            to the repo, so a link typed in the browser would stay in that browser.
            The config is the shared place, and Claude edits it. */
         return '<div class="pbar-menu-head">Figma</div>' +
@@ -555,7 +550,12 @@
           'data-tip="This prototype\'s copy of the toolbar is ' + VERSION + '; ' + esc(updateTo) + ' is published. Run toolbar/update.sh and commit.">Update</a>'
         : "") +
       '<div class="pbar-menu-wrap is-right" data-menu="figma">' +
-      '<button class="pbar-icon pbar-tt is-right" data-tip="Figma file" aria-label="Figma file">' + ic("figma") + "</button>" +
+      /* With a file linked the icon IS the link (one press opens Figma, and a
+         real anchor middle-clicks and cmd-clicks); the menu is only the
+         "nothing linked yet" explainer. Mirrors PrototypeBar.jsx. */
+      (api.figma()
+        ? '<a class="pbar-icon pbar-tt is-right" href="' + esc(api.figma()) + '" target="_blank" rel="noopener" data-tip="Open in Figma" aria-label="Open in Figma">' + ic("figma") + "</a>"
+        : '<button class="pbar-icon pbar-tt is-right" data-tip="Figma file" aria-label="Figma file">' + ic("figma") + "</button>") +
       '<div class="pbar-menu-slot"></div></div>' +
       '<div class="pbar-menu-wrap is-right" data-menu="share">' +
       '<button class="pbar-btn pbar-tt is-right" data-tip="Share" aria-label="Share">' + ic("share") + '<span class="pbar-lbl">Share</span></button>' +
