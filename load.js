@@ -20,7 +20,7 @@
    toolbar. One flag for every prototype, and it may sit at the very end of the
    link, hash routes included; the bar normalizes it into the query on arrival. */
 (function () {
-  var MAJOR = "2"; /* the release line this copy follows; update.sh keeps it in step */
+  var MAJOR = "3"; /* the release line this copy follows; update.sh keeps it in step */
   var HOSTED = "https://effectory-ux.github.io/prototype-toolbar/v" + MAJOR + "/";
   var C = window.PROTO_TOOLBAR || {};
   function isDevHost() {
