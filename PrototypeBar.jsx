@@ -104,7 +104,11 @@ export function PrototypeBar(props) {
   const disc = discRef.current;
   const [, setSeen] = useState(0);
   useEffect(() => { if (!active) return; return disc.init(() => setSeen(n => n + 1)); }, []); // eslint-disable-line
-  const unregistered = disc.unregistered();
+  // Discovery still records every route it sees — check.js reads that file to
+  // tell whoever maintains proto-config.js what is missing. The bar itself
+  // never lists those: a Screens entry is a link that works, and a route
+  // nobody registered is either a fault or a screen still to be registered.
+  // Neither belongs in a menu someone clicks.
   const [startRoute, setStartRouteState] = useState(() => getStartRoute());
   const startHere = () => {
     const here = disc.current();
@@ -290,12 +294,11 @@ export function PrototypeBar(props) {
         <span className="pbar-badge">{version ? version.label : "Toolbar"}</span>
       )}
 
-      {(useCases.length > 0 || unregistered.length > 0) && (
+      {useCases.length > 0 && (
         <div className="pbar-menu-wrap">
           <button className={"pbar-btn" + (menu === "cases" ? " is-open" : "")} data-tip="Screens"
             onClick={() => setMenu(m => (m === "cases" ? null : "cases"))}>
             <Ic name="layout" size={14} /><span className="pbar-lbl">Screens</span>
-            {isDevHost() && unregistered.length > 0 && <span className="pbar-count is-learn" title="Seen here, not in the Screens list">{unregistered.length}</span>}
           </button>
           {menu === "cases" && (
             <>
@@ -318,25 +321,6 @@ export function PrototypeBar(props) {
                     </div>
                   );
                 })}
-                {unregistered.length > 0 && (
-                  <>
-                    <div className="pbar-menu-head pbar-menu-sub">Seen here, not in this list</div>
-                    <div className="pbar-menu-note">Screens this prototype has shown that no entry above leads to. Register them in proto-config.js, or jump there (as far as the prototype's deep links allow).</div>
-                    {unregistered.map(e => (
-                      <div key={e.route} className="pbar-item pbar-row">
-                        <a className="pbar-row-main" href={e.example} onClick={() => setMenu(null)}>
-                          <span className="pbar-item-label">{e.label}</span>
-                          <span className="pbar-item-desc pbar-mono">{e.route}</span>
-                        </a>
-                        <span className="pbar-row-side">
-                          <button className={"pbar-start" + (startRoute === e.route ? " is-on" : "")} role="switch" aria-checked={startRoute === e.route} aria-label="Start here"
-                            title={startRoute === e.route ? "The prototype opens here — switch off for the default start" : "Open the prototype here"}
-                            onClick={() => (startRoute === e.route ? resetStart() : startOnRoute(e.route))}><span className="pbar-switch" aria-hidden="true" /></button>
-                        </span>
-                      </div>
-                    ))}
-                  </>
-                )}
               </div>
             </>
           )}

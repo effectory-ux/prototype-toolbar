@@ -207,17 +207,6 @@
   document.addEventListener("DOMContentLoaded", function () {
     var seen = api.seen(); if (seen[location.pathname]) { seen[location.pathname].title = document.title || seen[location.pathname].title; store.set("seen", JSON.stringify(seen)); }
   });
-  /* Pages seen in this browser that no Screens entry points to (the page you
-     are on is left out: it will show once you have moved on). */
-  function unregisteredPages() {
-    var seen = api.seen();
-    var listed = {};
-    screens.forEach(function (s) { try { listed[new URL(resolve(s.href), location.href).pathname] = true; } catch (e) {} });
-    return Object.keys(seen)
-      .filter(function (p) { return p.charAt(0) === "/" && !listed[p] && p !== location.pathname; })
-      .map(function (p) { return seen[p]; })
-      .sort(function (a, b) { return (b.lastSeen || "").localeCompare(a.lastSeen || ""); });
-  }
 
   /* ---- icons: the same glyphs as icons.jsx, inlined ------------------------ */
   var SVG = {
@@ -393,12 +382,6 @@
           out += '<div class="pbar-menu-head pbar-menu-sub">Start points</div>';
           starts.forEach(function (s) { out += item(!sp && sk === s.key ? "is-on" : "", 'data-start-key="' + esc(s.key) + '"', s.label, !sp && sk === s.key ? ic("check") : "", s.desc); });
         }
-        var extra = unregisteredPages();
-        if (extra.length) {
-          out += '<div class="pbar-menu-head pbar-menu-sub">Seen here, not in this list</div>' +
-            '<div class="pbar-menu-note">Pages this prototype has shown that no entry above points to. Register them in the config, or jump there.</div>';
-          extra.forEach(function (e) { out += screenRow(e.path, e.title || e.path, e.path, false, sp === e.path, 'data-start-path="' + esc(e.path) + '"'); });
-        }
         return out;
       },
       bind: function (slot, close, reopen) {
@@ -513,7 +496,7 @@
   function menuButton(key, icon, label, count) {
     return '<div class="pbar-menu-wrap" data-menu="' + key + '">' +
       '<button class="pbar-btn" data-tip="' + esc(label) + '">' + ic(icon) + '<span class="pbar-lbl">' + esc(label) + "</span>" +
-      (count ? '<span class="pbar-count' + (key === "screens" ? " is-learn" : "") + '" title="' + (key === "screens" ? "Seen here, not in the Screens list" : "") + '">' + count + "</span>" : "") + "</button>" +
+      (count ? '<span class="pbar-count">' + count + "</span>" : "") + "</button>" +
       '<div class="pbar-menu-slot"></div></div>';
   }
 
@@ -533,14 +516,13 @@
       return;
     }
     var offCount = edges.filter(function (e) { return api.edge(e.key) !== !!e.on; }).length;
-    var extraPages = unregisteredPages();
     bar = el(
       '<div class="pbar">' +
       (version && versions.length > 1
         ? '<div class="pbar-menu-wrap" data-menu="version"><button class="pbar-badge pbar-badge-btn" data-tip="Switch version">' + esc(badge) +
           '<span class="pbar-chev">' + ic("chevron-down", 12) + "</span></button><div class=\"pbar-menu-slot\"></div></div>"
         : '<span class="pbar-badge">' + esc(badge) + "</span>") +
-      (screens.length || extraPages.length ? menuButton("screens", "layout", "Screens", isDevHost() ? extraPages.length : 0) : "") +
+      (screens.length ? menuButton("screens", "layout", "Screens", 0) : "") +
       (edges.length ? menuButton("edges", "randomize", "Edge cases", offCount) : "") +
       (variants.length ? menuButton("variants", "sliders", "Variants") : "") +
       (screens.length ? "" : menuButton("start", "home", "Start")) + /* with screens, Start is a column in that menu */
