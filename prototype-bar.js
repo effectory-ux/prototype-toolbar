@@ -169,6 +169,10 @@
     /* a page chosen with "Start on the page I'm on" (a path), or null; an
        index page can send visitors there: location.replace(ProtoToolbar.startPath()) */
     startPath: function () { return store.get("startPath", "") || null; },
+    /* the Figma file this prototype comes from: the config's `figma`, or a link
+       pasted into the bar in this browser. The same value is what a future
+       Figma sync would read. */
+    figma: function () { return store.get("figma", "") || C.figma || null; },
     /* every page this prototype has shown in this browser: { path, title, count, lastSeen } */
     seen: function () { try { return JSON.parse(store.get("seen", "{}")); } catch (e) { return {}; } },
     plainLink: plainLink,
@@ -219,6 +223,7 @@
   var SVG = {
     sliders: '<path d="M18.5 3.33339C18.5 3.88567 18.0523 4.33339 17.5 4.33339L11.6667 4.33339C11.1144 4.33339 10.6667 3.88567 10.6667 3.33339C10.6667 2.7811 11.1144 2.33339 11.6667 2.33339L17.5 2.33339C18.0523 2.33339 18.5 2.7811 18.5 3.33339Z" fill="currentColor"/><path d="M1.49998 3.33339C1.49998 3.88567 1.94769 4.33339 2.49998 4.33339L7.33331 4.33339L7.33331 5.83339C7.33331 6.38567 7.78103 6.83339 8.33331 6.83339C8.8856 6.83339 9.33331 6.38567 9.33331 5.83339L9.33331 0.833389C9.33331 0.281104 8.8856 -0.166611 8.33331 -0.166611C7.78103 -0.166611 7.33331 0.281104 7.33331 0.833389L7.33331 2.33339L2.49998 2.33339C1.94769 2.33339 1.49998 2.7811 1.49998 3.33339Z" fill="currentColor"/><path d="M10 11C10.5523 11 11 10.5523 11 10C11 9.44773 10.5523 9.00001 10 9.00001L2.5 9.00001C1.94772 9.00001 1.5 9.44773 1.5 10C1.5 10.5523 1.94772 11 2.5 11L10 11Z" fill="currentColor"/><path d="M18.5 10C18.5 10.5523 18.0523 11 17.5 11L14.3333 11L14.3333 12.5C14.3333 13.0523 13.8856 13.5 13.3333 13.5C12.781 13.5 12.3333 13.0523 12.3333 12.5L12.3333 7.50001C12.3333 6.94773 12.781 6.50002 13.3333 6.50002C13.8856 6.50002 14.3333 6.94773 14.3333 7.50002L14.3333 9.00002L17.5 9.00002C18.0523 9.00002 18.5 9.44773 18.5 10Z" fill="currentColor"/><path d="M6.66669 13.1666C7.21897 13.1666 7.66669 13.6144 7.66669 14.1666L7.66669 19.1666C7.66669 19.7189 7.21897 20.1666 6.66669 20.1666C6.1144 20.1666 5.66669 19.7189 5.66669 19.1666L5.66669 17.6666L2.50002 17.6666C1.94774 17.6666 1.50002 17.2189 1.50002 16.6666C1.50002 16.1144 1.94774 15.6666 2.50002 15.6666L5.66669 15.6666L5.66669 14.1666C5.66669 13.6144 6.1144 13.1666 6.66669 13.1666Z" fill="currentColor"/><path d="M18.5 16.6666C18.5 17.2189 18.0523 17.6666 17.5 17.6666L10 17.6666C9.44771 17.6666 9 17.2189 9 16.6666C9 16.1144 9.44772 15.6666 10 15.6666L17.5 15.6666C18.0523 15.6666 18.5 16.1144 18.5 16.6666Z" fill="currentColor"/>',
     shapes: '<path fill-rule="evenodd" clip-rule="evenodd" d="M13.8069 9C14.7425 9 15.3129 7.90689 14.817 7.06417L11.0102 0.594671C10.5436 -0.198223 9.45641 -0.198224 8.98984 0.594669L5.18297 7.06417C4.68709 7.90688 5.2575 9 6.19313 9H13.8069ZM12.4587 7L10 2.82161L7.54129 7H12.4587Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M4.5 20C6.98528 20 9 17.9853 9 15.5C9 13.0147 6.98528 11 4.5 11C2.01472 11 0 13.0147 0 15.5C0 17.9853 2.01472 20 4.5 20ZM4.5 18C5.88071 18 7 16.8807 7 15.5C7 14.1193 5.88071 13 4.5 13C3.11929 13 2 14.1193 2 15.5C2 16.8807 3.11929 18 4.5 18Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M12.125 11C11.5037 11 11 11.5037 11 12.125V18.875C11 19.4963 11.5037 20 12.125 20H18.875C19.4963 20 20 19.4963 20 18.875V12.125C20 11.5037 19.4963 11 18.875 11H12.125ZM18 18H13V13H18V18Z" fill="currentColor"/>',
+    figma: '<g transform="scale(0.8333)" fill="currentColor"><path d="M12 0H8a4 4 0 0 0 0 8h4V0z"/><path d="M12 8H8a4 4 0 0 0 0 8h4V8z"/><path d="M12 16H8a4 4 0 0 0 0 8h4v-8z"/><path d="M12 0h4a4 4 0 0 1 0 8h-4V0z"/><path d="M20 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"/></g>',
     layout: '<path fill-rule="evenodd" clip-rule="evenodd" d="M16 1H4C2.34315 1 1 2.34315 1 4V16C1 17.6569 2.34315 19 4 19H16C17.6569 19 19 17.6569 19 16V4C19 2.34315 17.6569 1 16 1ZM3 4C3 3.44772 3.44772 3 4 3H16C16.5523 3 17 3.44772 17 4V6.00774C16.9532 6.00263 16.9055 6 16.8571 6H3.14286C3.09448 6 3.0468 6.00263 3 6.00774V4ZM3 7.99226V16C3 16.5523 3.44772 17 4 17H6.25V8H3.14286C3.09448 8 3.0468 7.99737 3 7.99226ZM8.25 17H16C16.5523 17 17 16.5523 17 16V7.99226C16.9532 7.99737 16.9055 8 16.8571 8H8.25V17Z" fill="currentColor"/>',
     "chevron-down": '<path fill-rule="evenodd" clip-rule="evenodd" d="M3.29289 6.29287C3.68342 5.90235 4.31658 5.90235 4.70711 6.29287L10 11.5858L15.2929 6.29287C15.6834 5.90235 16.3166 5.90235 16.7071 6.29287C17.0976 6.6834 17.0976 7.31656 16.7071 7.70709L10.7778 13.6364C10.3482 14.066 9.65176 14.0659 9.22218 13.6364L3.29289 7.70709C2.90237 7.31656 2.90237 6.6834 3.29289 6.29287Z" fill="currentColor"/>',
     randomize: '<path d="M14.8737 1.12621C14.4832 0.735682 13.85 0.735682 13.4595 1.12621C13.069 1.51673 13.069 2.1499 13.4595 2.54042L15.0858 4.16666H5.83333C4.68406 4.16666 3.58186 4.6232 2.7692 5.43586C1.95655 6.24852 1.5 7.35072 1.5 8.49999V10.1667C1.5 10.7189 1.94772 11.1667 2.5 11.1667C3.05228 11.1667 3.5 10.7189 3.5 10.1667V8.49999C3.5 7.88115 3.74583 7.28766 4.18342 6.85007C4.621 6.41249 5.21449 6.16666 5.83333 6.16666H15.0857L13.4595 7.79287C13.069 8.1834 13.069 8.81656 13.4595 9.20709C13.85 9.59761 14.4832 9.59761 14.8737 9.20709L18.201 5.87977C18.2244 5.85678 18.2467 5.83266 18.2677 5.80748C18.3219 5.74277 18.3665 5.67284 18.4017 5.59949C18.4647 5.46852 18.5 5.32171 18.5 5.16666C18.5 5.01593 18.4667 4.873 18.4069 4.74483C18.3681 4.66121 18.317 4.58185 18.2537 4.50944C18.2373 4.49063 18.2202 4.47243 18.2024 4.45489L14.8737 1.12621Z" fill="currentColor"/><path d="M6.54044 10.7929C6.93096 11.1834 6.93096 11.8166 6.54044 12.2071L4.91422 13.8333H14.1667C14.7855 13.8333 15.379 13.5875 15.8166 13.1499C16.2542 12.7123 16.5 12.1188 16.5 11.5V9.83331C16.5 9.28103 16.9477 8.83331 17.5 8.83331C18.0523 8.83331 18.5 9.28103 18.5 9.83331V11.5C18.5 12.6493 18.0435 13.7515 17.2308 14.5641C16.4181 15.3768 15.3159 15.8333 14.1667 15.8333H4.91421L6.54044 17.4595C6.93096 17.8501 6.93096 18.4832 6.54044 18.8738C6.14992 19.2643 5.51675 19.2643 5.12623 18.8738L1.79289 15.5404C1.59763 15.3452 1.5 15.0892 1.5 14.8333C1.5 14.6966 1.52742 14.5664 1.57705 14.4477C1.6232 14.3371 1.6901 14.2331 1.77773 14.1417L1.79474 14.1244L5.12623 10.7929C5.51675 10.4024 6.14992 10.4024 6.54044 10.7929Z" fill="currentColor"/>',
@@ -317,10 +322,22 @@
      trap you on one screen — and never when you are already there. A host
      needs no code of its own for this; before 2.2 it did, which is why the
      switch looked like it did nothing. */
+  /* Only figma.com links, and only http(s): the value ends up in an href. */
+  function figmaUrl(v) {
+    try {
+      var u = new URL(String(v || "").trim());
+      return /^https?:$/.test(u.protocol) && /(^|\.)figma\.com$/.test(u.hostname) ? u.href : null;
+    } catch (e) { return null; }
+  }
+  var JUMPED = PREFIX + ".jumped";
+  function markJump() { try { sessionStorage.setItem(JUMPED, "1"); } catch (e) {} }
+  function tookJump() { try { var v = sessionStorage.getItem(JUMPED); sessionStorage.removeItem(JUMPED); return v === "1"; } catch (e) { return false; } }
   function applyStart() {
     try {
       var want = api.startPath();
       if (!want || want === herePath()) return;
+      /* you clicked a screen in the bar: go where you asked, not to the start */
+      if (tookJump()) return;
       var here = relPath();
       var entry = C.start !== undefined ? here === String(C.start).replace(/^\/+/, "") : here === "";
       if (!entry) return;
@@ -385,6 +402,8 @@
         return out;
       },
       bind: function (slot, close, reopen) {
+        /* a deliberate jump from this menu wins over the start, once */
+        slot.querySelectorAll("a.pbar-row-main, a.pbar-item").forEach(function (a) { a.addEventListener("click", markJump); });
         function setStart(path, key) { store.set("startPath", path || ""); store.set("startAt", key || ""); reopen(); }
         slot.querySelectorAll("[data-start-path]").forEach(function (b) {
           b.addEventListener("click", function () {
@@ -447,6 +466,47 @@
         });
       }
     },
+    figma: {
+      html: function () {
+        var link = api.figma(), local = store.get("figma", ""), cfg = C.figma || "";
+        var out = '<div class="pbar-menu-head">Figma</div>';
+        if (link) {
+          out += '<div class="pbar-share-url">' + esc(link) + "</div>" +
+            '<a class="pbar-item is-primary" href="' + esc(link) + '" target="_blank" rel="noopener">' +
+            '<span class="pbar-item-label">Open in Figma</span></a>';
+        } else {
+          out += '<div class="pbar-menu-note">Nothing linked yet. Paste the Figma file or frame this prototype comes from, so whoever opens the bar can find it.</div>';
+        }
+        if (figmaError) out += '<div class="pbar-menu-note pbar-err">That is not a Figma link. It should start with https://www.figma.com/…</div>';
+        out += '<div class="pbar-field"><input class="pbar-input" type="url" spellcheck="false" placeholder="https://www.figma.com/design/…" value="' + esc(local) + '" data-figma-input></div>' +
+          item("", "data-figma-save", link ? "Replace the link" : "Save the link");
+        if (local && local !== cfg) {
+          out += '<div class="pbar-menu-note">Saved in this browser only. To give everyone the link, add this line to the prototype\'s config and commit it:</div>' +
+            '<div class="pbar-share-url">figma: "' + esc(local) + '",</div>' +
+            item("", "data-figma-copy", "Copy that line");
+        }
+        return out;
+      },
+      bind: function (slot, close, reopen) {
+        var input = slot.querySelector("[data-figma-input]");
+        function save() {
+          var v = String(input.value || "").trim();
+          if (!v) { store.set("figma", ""); figmaError = false; reopen(); return; }
+          var ok = figmaUrl(v);
+          figmaError = !ok;
+          if (ok) store.set("figma", ok);
+          reopen();
+        }
+        slot.querySelector("[data-figma-save]").addEventListener("click", save);
+        input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); save(); } });
+        var c = slot.querySelector("[data-figma-copy]");
+        if (c) c.addEventListener("click", function () {
+          try { navigator.clipboard.writeText('figma: "' + store.get("figma", "") + '",'); } catch (e) {}
+          c.innerHTML = '<span class="pbar-item-label">Copied</span>' + ic("check");
+        });
+        setTimeout(function () { try { input.focus(); } catch (e) {} }, 0);
+      }
+    },
     share: {
       html: function () {
         var live = liveShareUrl({ toolbar: shareToolbar, start: shareStart });
@@ -477,7 +537,7 @@
       }
     }
   };
-  var shareStart = false, shareToolbar = false;
+  var shareStart = false, shareToolbar = false, figmaError = false;
 
   function menuButton(key, icon, label, count) {
     return '<div class="pbar-menu-wrap" data-menu="' + key + '">' +
@@ -518,6 +578,9 @@
         ? '<a class="pbar-update pbar-tt is-right" href="https://github.com/effectory-ux/prototype-toolbar/releases" target="_blank" rel="noopener" ' +
           'data-tip="This prototype\'s copy of the toolbar is ' + VERSION + '; ' + esc(updateTo) + ' is published. Run toolbar/update.sh and commit.">Update</a>'
         : "") +
+      '<div class="pbar-menu-wrap is-right" data-menu="figma">' +
+      '<button class="pbar-icon pbar-tt is-right" data-tip="Figma file" aria-label="Figma file">' + ic("figma") + "</button>" +
+      '<div class="pbar-menu-slot"></div></div>' +
       '<div class="pbar-menu-wrap is-right" data-menu="share">' +
       '<button class="pbar-btn pbar-tt is-right" data-tip="Share" aria-label="Share">' + ic("share") + '<span class="pbar-lbl">Share</span></button>' +
       '<div class="pbar-menu-slot"></div></div>' +

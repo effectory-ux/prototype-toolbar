@@ -68,6 +68,8 @@ const saveHidden = (prefix, v) => { try { localStorage.setItem(hideKey(prefix), 
 //               plugin); deployed it marks unpublished siblings instead of
 //               linking into a 404. `url` also powers the Share menu's live
 //               link.
+//   figma       — a Figma file URL (or `FIGMA` in the config): the Figma button
+//               opens it, and a colleague can paste one into the bar.
 //   config      — OR hand over the host's whole proto-config module
 //               (`import * as PROTO from "./data/proto-config.js"` →
 //               `config={PROTO}`): the bar reads the conventional exports
@@ -201,6 +203,29 @@ export function PrototypeBar(props) {
   // version rather than at whatever was deployed last. It opens at the
   // prototype's start unless "Share this page" is on, and the toolbar stays
   // out of the link unless "Include the toolbar" says otherwise.
+  // The Figma file this prototype comes from: the config's `figma`, or a link
+  // pasted here in this browser. A future Figma sync reads the same value.
+  const figmaCfg = c.figma ?? c.FIGMA ?? "";
+  const figmaKey = storagePrefix + ".figma";
+  const [figmaLocal, setFigmaLocal] = useState(() => { try { return localStorage.getItem(figmaKey) || ""; } catch (_) { return ""; } });
+  const [figmaDraft, setFigmaDraft] = useState(figmaLocal);
+  const [figmaError, setFigmaError] = useState(false);
+  const [figmaCopied, setFigmaCopied] = useState(false);
+  const figmaLink = figmaLocal || figmaCfg || "";
+  // Only figma.com links, and only http(s): the value ends up in an href.
+  const figmaUrl = (v) => {
+    try {
+      const u = new URL(String(v || "").trim());
+      return /^https?:$/.test(u.protocol) && /(^|\.)figma\.com$/.test(u.hostname) ? u.href : null;
+    } catch (_) { return null; }
+  };
+  const saveFigma = () => {
+    const v = String(figmaDraft || "").trim();
+    if (!v) { setFigmaLocal(""); setFigmaError(false); try { localStorage.removeItem(figmaKey); } catch (_) {} return; }
+    const ok = figmaUrl(v);
+    setFigmaError(!ok);
+    if (ok) { setFigmaLocal(ok); setFigmaDraft(ok); try { localStorage.setItem(figmaKey, ok); } catch (_) {} }
+  };
   const [shareToolbar, setShareToolbar] = useState(false);
   const [shareStart, setShareStart] = useState(false);
   const shareUrl = liveShareUrl(versions, { toolbar: shareToolbar, start: shareStart });
@@ -490,6 +515,54 @@ export function PrototypeBar(props) {
           <span className="pbar-sep" aria-hidden="true" />
         </>
       )}
+
+      <div className="pbar-menu-wrap">
+        <button className={"pbar-icon pbar-tt is-right" + (menu === "figma" ? " is-open" : "")}
+          onClick={() => setMenu(m => (m === "figma" ? null : "figma"))}
+          data-tip="Figma file" aria-label="Figma file">
+          <Ic name="figma" size={14} />
+        </button>
+        {menu === "figma" && (
+          <>
+            <div className="pbar-scrim" onMouseDown={() => setMenu(null)} />
+            <div className="pbar-menu is-right">
+              <div className="pbar-menu-head">Figma</div>
+              {figmaLink ? (
+                <>
+                  <div className="pbar-share-url">{figmaLink}</div>
+                  <a className="pbar-item is-primary" href={figmaLink} target="_blank" rel="noopener noreferrer">
+                    <span className="pbar-item-label">Open in Figma</span>
+                  </a>
+                </>
+              ) : (
+                <div className="pbar-menu-note">Nothing linked yet. Paste the Figma file or frame this prototype comes from, so whoever opens the bar can find it.</div>
+              )}
+              {figmaError && <div className="pbar-menu-note pbar-err">That is not a Figma link. It should start with https://www.figma.com/…</div>}
+              <div className="pbar-field">
+                <input className="pbar-input" type="url" spellCheck={false} autoFocus
+                  placeholder="https://www.figma.com/design/…" value={figmaDraft}
+                  onChange={(e) => setFigmaDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); saveFigma(); } }} />
+              </div>
+              <button className="pbar-item" onClick={saveFigma}>
+                <span className="pbar-item-label">{figmaLink ? "Replace the link" : "Save the link"}</span>
+              </button>
+              {figmaLocal && figmaLocal !== figmaCfg && (
+                <>
+                  <div className="pbar-menu-note">Saved in this browser only. To give everyone the link, add this line to the prototype's config and commit it:</div>
+                  <div className="pbar-share-url">{`figma: "${figmaLocal}",`}</div>
+                  <button className="pbar-item" onClick={() => {
+                    try { navigator.clipboard.writeText(`figma: "${figmaLocal}",`); setFigmaCopied(true); setTimeout(() => setFigmaCopied(false), 1600); } catch (_) {}
+                  }}>
+                    <span className="pbar-item-label">{figmaCopied ? "Copied" : "Copy that line"}</span>
+                    {figmaCopied && <Ic name="check" size={14} />}
+                  </button>
+                </>
+              )}
+            </div>
+          </>
+        )}
+      </div>
 
       <div className="pbar-menu-wrap">
         <button className={"pbar-btn pbar-tt is-right" + (menu === "share" ? " is-open" : "")}

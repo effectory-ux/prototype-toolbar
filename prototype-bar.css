@@ -29,6 +29,12 @@ body.proto-shell .app > * { height: auto; }
    outside the Engage DS — dark and compact, so it cannot be mistaken for
    product UI. Hide it with Ctrl+` or its close button; reveal it again from the
    tab in the very top-left corner. */
+/* The bar brings its own box model: an <a class="pbar-item"> would otherwise be
+   100% + padding wide on a page without a global reset (buttons get
+   border-box from the browser, anchors do not), which showed up as a stray
+   horizontal scrollbar in the menus. */
+.pbar, .pbar *, .pbar-peek, .pbar-peek * { box-sizing: border-box; }
+
 .pbar { position: relative; z-index: 10000; flex: none; display: flex; align-items: center; gap: 6px; width: 100%;
   padding: 7px 12px; background: #14161a; color: #e7e9ec; font-size: 12.5px;
   font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif; border-bottom: 1px solid #2a2f39; }
@@ -254,3 +260,11 @@ a.pbar-row-main:hover, button.pbar-row-main:hover { background: #2a2f39; }
 .pbar-item.is-primary:hover { background: #93ded5; }
 .pbar-item.is-primary .pbar-item-label { font-weight: 700; }
 .pbar-item.is-primary i { margin-left: 6px; color: #14161a; }
+
+/* ---- A field in a menu (the Figma link) ------------------------------------ */
+.pbar-field { padding: 3px 8px 6px; }
+.pbar-input { width: 100%; box-sizing: border-box; padding: 6px 8px; border-radius: 6px;
+  border: 1px solid #343b47; background: #0f1115; color: #e7e9ec; font: inherit; font-size: 11.5px; }
+.pbar-input:focus { outline: none; border-color: #7ad3c8; }
+.pbar-input::placeholder { color: #6b7280; }
+.pbar-menu-note.pbar-err { color: #f5a3a3; }
