@@ -19,7 +19,12 @@ export function protoScreens({ discoveredFile = "public/proto-discovered.json" }
   // Union of what the browser knows and what is on disk: another browser or
   // an earlier session may have seen screens this one has not.
   const mergeDisc = (prev, incoming) => {
-    const out = Object.assign(Object.create(null), prev.entries || {}); // null prototype: "__proto__" is just a route
+    // Copy each entry (and its `via`) instead of referencing prev's objects:
+    // mutating shared objects made the caller's changed-check compare the
+    // merge against itself, so `via`/count/lastSeen updates on known routes
+    // never reached the file — only brand-new routes did.
+    const out = Object.create(null); // null prototype: "__proto__" is just a route
+    Object.keys(prev.entries || {}).forEach(k => { out[k] = { ...prev.entries[k], via: { ...(prev.entries[k].via || {}) } }; });
     Object.values(incoming || {}).forEach(e => {
       if (!e || !e.route) return;
       const cur = Object.prototype.hasOwnProperty.call(out, e.route) ? out[e.route] : undefined;
