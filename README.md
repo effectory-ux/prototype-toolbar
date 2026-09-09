@@ -37,7 +37,7 @@ In the bar: the **badge** names the version and switches between versions;
 the prototype opens on — applied when someone opens the prototype's front door,
 not when you reload the page you are working on, and a jump from the Screens
 menu itself always wins; **Edge cases** and **Variants** flip states; the
-**Figma** button opens the linked file, or takes a pasted link; **Share**
+**Figma** button opens the linked file; **Share**
 gives the tester link, or the colleague link if you toggle the toolbar in.
 React prototypes also get **Edit** (inline copy editing, dev only) and
 **Events** (the Piwik spec drawn over the live UI). Collapse with Ctrl+` or the
@@ -116,7 +116,7 @@ current `URL`.
 | `name` | `"GTMA"` | badge text when the page is in no version |
 | `live` | URL | the **site** root on Pages; Share appends this page's path, so one `live` is right even when the repo hosts several prototypes |
 | `start` | `"overview.html"` | the prototype's front door: the page where a chosen starting point is applied, and the one Share can offer. Needed when several prototypes share a repo; otherwise the index is the front door |
-| `figma` | URL | the Figma file this prototype comes from. The Figma button opens it; a colleague can paste one into the bar, and that value is the hook a future Figma sync would read |
+| `figma` | URL | the Figma file this prototype comes from; the Figma button opens it. Set it here and commit — the bar has no field to type one in, because a deployed page cannot write to its own repo. The hook a future Figma sync would read |
 | `versions` | `{key, label, desc, match, go}` | `match` decides which version a page is (string, RegExp or function), `go` is the same screen in another version |
 | `screens` | `{key, label, desc, href, group?, default?, match?}` | `default: true` marks the start; a dialog is a screen with a deep-link `href` and a `match` on the query |
 | `edgeCases` | `{key, label, desc, on}` | persisted; toggling reloads unless you pass `apply` |

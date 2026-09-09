@@ -169,10 +169,10 @@
     /* a page chosen with "Start on the page I'm on" (a path), or null; an
        index page can send visitors there: location.replace(ProtoToolbar.startPath()) */
     startPath: function () { return store.get("startPath", "") || null; },
-    /* the Figma file this prototype comes from: the config's `figma`, or a link
-       pasted into the bar in this browser. The same value is what a future
-       Figma sync would read. */
-    figma: function () { return store.get("figma", "") || C.figma || null; },
+    /* the Figma file this prototype comes from: the config's `figma`, which is
+       committed with the prototype so everyone sees the same link. The same
+       value is what a future Figma sync would read. */
+    figma: function () { return figmaUrl(C.figma); },
     /* every page this prototype has shown in this browser: { path, title, count, lastSeen } */
     seen: function () { try { return JSON.parse(store.get("seen", "{}")); } catch (e) { return {}; } },
     plainLink: plainLink,
@@ -468,44 +468,20 @@
     },
     figma: {
       html: function () {
-        var link = api.figma(), local = store.get("figma", ""), cfg = C.figma || "";
-        var out = '<div class="pbar-menu-head">Figma</div>';
+        var link = api.figma();
         if (link) {
-          out += '<div class="pbar-share-url">' + esc(link) + "</div>" +
+          return '<div class="pbar-menu-head">Figma</div>' +
+            '<div class="pbar-share-url">' + esc(link) + "</div>" +
             '<a class="pbar-item is-primary" href="' + esc(link) + '" target="_blank" rel="noopener">' +
             '<span class="pbar-item-label">Open in Figma</span></a>';
-        } else {
-          out += '<div class="pbar-menu-note">Nothing linked yet. Paste the Figma file or frame this prototype comes from, so whoever opens the bar can find it.</div>';
         }
-        if (figmaError) out += '<div class="pbar-menu-note pbar-err">That is not a Figma link. It should start with https://www.figma.com/…</div>';
-        out += '<div class="pbar-field"><input class="pbar-input" type="url" spellcheck="false" placeholder="https://www.figma.com/design/…" value="' + esc(local) + '" data-figma-input></div>' +
-          item("", "data-figma-save", link ? "Replace the link" : "Save the link");
-        if (local && local !== cfg) {
-          out += '<div class="pbar-menu-note">Saved in this browser only. To give everyone the link, add this line to the prototype\'s config and commit it:</div>' +
-            '<div class="pbar-share-url">figma: "' + esc(local) + '",</div>' +
-            item("", "data-figma-copy", "Copy that line");
-        }
-        return out;
+        /* Nothing to type here on purpose: a page served from Pages cannot write
+           to the repo, so a link typed in the browser would stay in that browser.
+           The config is the shared place, and Claude edits it. */
+        return '<div class="pbar-menu-head">Figma</div>' +
+          '<div class="pbar-menu-note">No Figma file linked yet. Ask Claude in this prototype&rsquo;s folder &mdash; &ldquo;add the Figma link &lt;url&gt; to the toolbar&rdquo; &mdash; and it lands in the config, so everyone who opens this bar sees it.</div>';
       },
-      bind: function (slot, close, reopen) {
-        var input = slot.querySelector("[data-figma-input]");
-        function save() {
-          var v = String(input.value || "").trim();
-          if (!v) { store.set("figma", ""); figmaError = false; reopen(); return; }
-          var ok = figmaUrl(v);
-          figmaError = !ok;
-          if (ok) store.set("figma", ok);
-          reopen();
-        }
-        slot.querySelector("[data-figma-save]").addEventListener("click", save);
-        input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); save(); } });
-        var c = slot.querySelector("[data-figma-copy]");
-        if (c) c.addEventListener("click", function () {
-          try { navigator.clipboard.writeText('figma: "' + store.get("figma", "") + '",'); } catch (e) {}
-          c.innerHTML = '<span class="pbar-item-label">Copied</span>' + ic("check");
-        });
-        setTimeout(function () { try { input.focus(); } catch (e) {} }, 0);
-      }
+      bind: function () {}
     },
     share: {
       html: function () {
@@ -537,7 +513,7 @@
       }
     }
   };
-  var shareStart = false, shareToolbar = false, figmaError = false;
+  var shareStart = false, shareToolbar = false;
 
   function menuButton(key, icon, label, count) {
     return '<div class="pbar-menu-wrap" data-menu="' + key + '">' +

@@ -95,10 +95,20 @@ prototype's own entry page or the switch has no front door to act on. It is
 remembered per browser, so it is a personal preference, not something a shared
 link carries.
 
-**The Figma link.** `figma` in the config is the file the prototype comes from;
-the Figma button in the bar opens it. Anyone can paste a link into that menu,
-which saves it in their browser and shows the exact config line to commit so
-everyone gets it. A future Figma sync will read the same field.
+**The Figma link.** When someone asks to "add the Figma link" (or link a Figma
+file, frame or design) to a prototype, put it in that prototype's config —
+nowhere else:
+
+- static: `figma: "https://www.figma.com/design/…",` in its `proto-config.js`
+  (the per-prototype one, if the repo has several);
+- React: `export const FIGMA = "https://www.figma.com/design/…";` in the
+  config module the bar receives.
+
+Then commit and push, and the Figma button in the bar opens it for everyone.
+Only `figma.com` http(s) links are used; anything else is ignored. The bar has
+no field to type one in, deliberately: a deployed page cannot write to its own
+repo, so a link typed in a browser would never reach a colleague. One link per
+prototype for now; the same field is what a later Figma sync will read.
 
 **Several prototypes in one repo** (a docs repo with many pages at the root):
 one shared `toolbar/`, but one config per prototype — `proto-config-<slug>.js`
